@@ -21,7 +21,6 @@
         }
         html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         
-        /* Modificado: Oculto por defecto para evitar el parpadeo visual */
         .panel-container { display: none; flex-direction: column; align-items: center; padding: 40px 20px; height: 100%; overflow-y: auto; box-sizing: border-box; }
         .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
@@ -38,7 +37,6 @@
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
         
-        /* Modificado: El modo reproductor se mantiene listo de fondo en negro */
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
         .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
         video { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -49,9 +47,6 @@
         
         @keyframes girar { to { transform: rotate(360deg); } }
         .is-loading .loading-overlay { opacity: 1; }
-        
-        .plyr__captions { pointer-events: none; padding: 25px !important; bottom: 5% !important; }
-        .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.75) !important; color: #ffffff !important; font-size: 22px !important; font-weight: bold !important; padding: 6px 16px !important; border-radius: 5px; text-shadow: 3px 3px 5px rgba(0,0,0,0.9) !important; display: inline-block !important; }
 
         .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
@@ -123,7 +118,6 @@
         const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
         const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
         const regex360 = /\[360P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-        const regexSubs = /\[Español\]\s*(https?:\/\/[^\s"']+\.srt[^\s"']*)/i;
 
         let urlsEncontradas = [];
         
@@ -136,21 +130,14 @@
         const match360 = regex360.exec(texto);
         if (match360) urlsEncontradas.push(match360[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
 
-        const matchS = regexSubs.exec(texto);
-
         if(urlsEncontradas.length === 0) {
             return chibimarisAviso("❌ No se localizó ningún formato m3u8 válido en la información introducida.");
         }
-
-        let subsUrl = matchS ? matchS[1] : '';
         
         const listaVideosEncoded = encodeURIComponent(urlsEncontradas.join(','));
         const urlBase = window.location.href.split('?')[0];
         
         let urlFinal = `${urlBase}?videos=${listaVideosEncoded}`;
-        if(subsUrl) {
-            urlFinal += `&subs=${encodeURIComponent(subsUrl)}`;
-        }
 
         textoResultadoGlobal = `=== EPISODIO ${numeroEpisodio} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`;
 
@@ -175,16 +162,12 @@
     let videoElement;
     let container;
     let timeoutsDeCarga;
-    let trackGlobal = null;
 
-    // LÓGICA DE DETECCIÓN ANTICIPADA (Evita saltos visuales en pantalla)
     window.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const videosParam = urlParams.get('videos'); 
-        const subsParam = urlParams.get('subs');
 
         if (videosParam) {
-            // SI HAY VIDEO: Asegura que el generador nunca se dibuje y arranca en negro directo
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
             
@@ -209,20 +192,8 @@
                 clearTimeout(timeoutsDeCarga);
             });
 
-            if(subsParam) {
-                let vttUrl = await corregirSrtAVtt(decodeURIComponent(subsParam));
-                trackGlobal = document.createElement('track');
-                trackGlobal.kind = 'captions';
-                trackGlobal.label = 'Español';
-                trackGlobal.srclang = 'es';
-                trackGlobal.default = true;
-                trackGlobal.src = vttUrl;
-                videoElement.appendChild(trackGlobal);
-            }
-
             cargarServidorHLS(listaVideos[urlActualIdx]);
         } else {
-            // SI NO HAY VIDEO: Recién en este momento se despliega el panel de texto de forma segura
             document.getElementById('viewGenerador').style.display = 'flex';
         }
     });
@@ -230,10 +201,10 @@
     function cargarServidorHLS(streamUrl) {
         document.getElementById('loadingMessage').innerText = `Conectando... (Servidor ${urlActualIdx + 1}/${listaVideos.length})`;
         
+        // Removido todo el menú y lógicas de los subtítulos de Plyr
         const defaultOptions = {
-            captions: { active: true, update: true, language: 'es' },
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'fullscreen'],
-            settings: ['captions', 'quality']
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+            settings: ['quality']
         };
 
         if (hls) { hls.destroy(); }
@@ -322,21 +293,7 @@
     }
 
     function configurarEventosPlayer() {
-        const encenderSubs = () => {
-            setTimeout(() => {
-                if (player && player.captions) {
-                    player.toggleCaptions(true);
-                    if(videoElement.textTracks && videoElement.textTracks[0]) {
-                        videoElement.textTracks[0].mode = 'showing';
-                    }
-                }
-            }, 400);
-        };
-
-        player.on('ready', encenderSubs);
-        player.on('play', encenderSubs);
         player.on('enterfullscreen', () => {
-            encenderSubs();
             if (screen.orientation && screen.orientation.lock) {
                 screen.orientation.lock('landscape').catch(() => {});
             }
@@ -347,36 +304,6 @@
                 screen.orientation.unlock();
             }
         });
-    }
-
-    async function corregirSrtAVtt(url) {
-        try {
-            const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(url);
-            let t = "";
-            
-            try {
-                const res = await fetch(proxyUrl);
-                const json = await res.json();
-                t = json.contents;
-            } catch(e) {
-                const res = await fetch(url);
-                t = await res.text();
-            }
-
-            if(!t || t.includes('<html')) {
-                return "data:text/vtt;charset=utf-8,WEBVTT\n\n00:00:01.000 --> 00:00:10.000\n[Subtítulos en Español]";
-            }
-
-            let vtt = "WEBVTT\n\n" + t
-                .replace(/\r\n/g, '\n')
-                .replace(/\r/g, '\n')
-                .replace(/(\d\d:\d\d:\d\d),(\d\d\d)/g, '$1.$2')
-                .replace(/(\d\d:\d\d:\d\d\.\d\d\d) --> (\d\d:\d\d:\d\d\.\d\d\d)/g, '$1 --> $2');
-
-            return URL.createObjectURL(new Blob([vtt], { type: 'text/vtt;charset=utf-8' }));
-        } catch(e) { 
-            return url; 
-        }
     }
 </script>
 </body>
