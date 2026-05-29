@@ -21,7 +21,8 @@
         }
         html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         
-        .panel-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; height: 100%; overflow-y: auto; box-sizing: border-box; }
+        /* Modificado: Oculto por defecto para evitar el parpadeo visual */
+        .panel-container { display: none; flex-direction: column; align-items: center; padding: 40px 20px; height: 100%; overflow-y: auto; box-sizing: border-box; }
         .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
         h1 span { color: #fff; }
@@ -31,18 +32,18 @@
         .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
         .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
         
-        /* Ajuste para que el recuadro respete los saltos de línea del ejemplo */
         .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--text-main); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; white-space: pre-wrap; line-height: 1.5; }
         .output-link span.link-color { color: var(--orange-crunchy); }
 
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
         
+        /* Modificado: El modo reproductor se mantiene listo de fondo en negro */
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
         .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
         video { width: 100%; height: 100%; object-fit: contain; display: block; }
         
-        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 21, 25, 0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.3s; opacity: 0; }
+        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 21, 25, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.3s; opacity: 0; }
         .spinner { width: 55px; height: 55px; border: 5px solid rgba(244, 117, 33, 0.15); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 0.9s linear infinite; }
         .loading-text { color: #fff; margin-top: 15px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; text-align: center; padding: 0 10px; }
         
@@ -52,7 +53,6 @@
         .plyr__captions { pointer-events: none; padding: 25px !important; bottom: 5% !important; }
         .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.75) !important; color: #ffffff !important; font-size: 22px !important; font-weight: bold !important; padding: 6px 16px !important; border-radius: 5px; text-shadow: 3px 3px 5px rgba(0,0,0,0.9) !important; display: inline-block !important; }
 
-        /* VENTANA FLOTANTE DE AVISOS DE CHIBIMARIS */
         .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
         .custom-alert-box { background: var(--bg-card); border: 2px solid var(--orange-crunchy); border-radius: 8px; width: 88%; max-width: 380px; padding: 25px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.8); transform: scale(0.85); transition: transform 0.2s ease; }
@@ -102,7 +102,7 @@
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
 <script>
-    let textoResultadoGlobal = ""; // Variable para guardar el texto limpio para copiar
+    let textoResultadoGlobal = "";
 
     function chibimarisAviso(mensaje) {
         document.getElementById('alertMessage').innerText = mensaje;
@@ -117,7 +117,6 @@
         const texto = document.getElementById('rawInput').value.trim();
         if(!texto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los enlaces para continuar.");
 
-        // Intentar detectar si el usuario incluyó algún número de episodio en su texto original (Ej: "Episodio 5" o "Capitulo 12")
         const matchEpisodio = texto.match(/(?:episodio|capitulo|cap|ep)\s*(\d+)/i);
         const numeroEpisodio = matchEpisodio ? matchEpisodio[1] : "1";
 
@@ -153,15 +152,12 @@
             urlFinal += `&subs=${encodeURIComponent(subsUrl)}`;
         }
 
-        // CREACIÓN DE LA PLANTILLA EXACTA QUE PEDISTE
         textoResultadoGlobal = `=== EPISODIO ${numeroEpisodio} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`;
 
-        // Mostrar en pantalla (con clase para resaltar el enlace en naranja si se desea)
         document.getElementById('linkOutput').innerHTML = `=== EPISODIO ${numeroEpisodio} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`;
         document.getElementById('resultArea').style.display = 'block';
     }
 
-    // NUEVA FUNCIÓN PARA COPIAR AUTOMÁTICAMENTE
     function copiarAlPortapapeles() {
         if(!textoResultadoGlobal) return;
         
@@ -181,12 +177,14 @@
     let timeoutsDeCarga;
     let trackGlobal = null;
 
+    // LÓGICA DE DETECCIÓN ANTICIPADA (Evita saltos visuales en pantalla)
     window.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const videosParam = urlParams.get('videos'); 
         const subsParam = urlParams.get('subs');
 
         if (videosParam) {
+            // SI HAY VIDEO: Asegura que el generador nunca se dibuje y arranca en negro directo
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
             
@@ -223,6 +221,9 @@
             }
 
             cargarServidorHLS(listaVideos[urlActualIdx]);
+        } else {
+            // SI NO HAY VIDEO: Recién en este momento se despliega el panel de texto de forma segura
+            document.getElementById('viewGenerador').style.display = 'flex';
         }
     });
 
