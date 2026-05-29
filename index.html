@@ -25,7 +25,7 @@
         .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
         h1 span { color: #fff; }
-        textarea { width: 100%; height: 150px; background-color: var(--bg-dark); color: #fff; border: 1px solid #3a3b40; border-radius: 4px; padding: 12px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: none; }
+        textarea { width: 100%; height: 180px; background-color: var(--bg-dark); color: #fff; border: 1px solid #3a3b40; border-radius: 4px; padding: 12px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: none; }
         button { width: 100%; background-color: var(--orange-crunchy); color: #fff; border: none; padding: 14px; font-size: 16px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; margin-top: 15px; transition: 0.2s; }
         button:hover { background-color: var(--orange-hover); }
         .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
@@ -44,7 +44,7 @@
         .is-loading .loading-overlay { opacity: 1; }
         
         .plyr__captions { pointer-events: none; padding: 25px !important; bottom: 5% !important; }
-        .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.75) !important; color: #ffffff !important; font-size: 22px !important; font-weight: bold !important; padding: 6px 18px !important; border-radius: 5px; text-shadow: 3px 3px 5px rgba(0,0,0,0.9) !important; display: inline-block !important; }
+        .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.75) !important; color: #ffffff !important; font-size: 22px !important; font-weight: bold !important; padding: 6px 16px !important; border-radius: 5px; text-shadow: 3px 3px 5px rgba(0,0,0,0.9) !important; display: inline-block !important; }
     </style>
 </head>
 <body>
@@ -52,12 +52,12 @@
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador optimizado (Enlaces ultra-cortos sin repetidos).</p>
-        <textarea id="rawInput" placeholder="Pega el bloque completo con los links aquí..."></textarea>
-        <button onclick="procesarCorto()">Generar Enlace Corto</button>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Filtro Estricto: Solo una calidad de 720P, 540P y 360P (Sin Duplicados).</p>
+        <textarea id="rawInput" placeholder="Pega el bloque completo del episodio aquí..."></textarea>
+        <button onclick="procesarCorto()">Generar Enlace Corto Limpio</button>
         
         <div id="resultArea" class="result-box">
-            <span class="output-title">📱 Enlace Súper Corto para tu App Doramas:</span>
+            <span class="output-title">📱 Enlace Optimizado Súper Corto:</span>
             <div id="linkOutput" class="output-link"></div>
         </div>
     </div>
@@ -81,42 +81,36 @@
         const texto = document.getElementById('rawInput').value.trim();
         if(!texto) return alert("Por favor pega el bloque de texto.");
 
-        const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/gi;
-        const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/gi;
-        
-        let urlsEncontradas = [];
-        let match;
-
-        // Buscar enlaces 720p únicos (evitando meter los que ya existen)
-        while ((match = regex720.exec(texto)) !== null) {
-            let link = match[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&');
-            if(!urlsEncontradas.includes(link)) {
-                urlsEncontradas.push(link);
-            }
-        }
-        // Buscar enlaces 540p únicos de la misma forma
-        while ((match = regex540.exec(texto)) !== null) {
-            let link = match[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&');
-            if(!urlsEncontradas.includes(link)) {
-                urlsEncontradas.push(link);
-            }
-        }
-
+        // Expresiones regulares mejoradas para saltarse espacios y saltos de línea (\s*)
+        const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
+        const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
+        const regex360 = /\[360P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
         const regexSubs = /\[Español\]\s*(https?:\/\/[^\s"']+\.srt[^\s"']*)/i;
+
+        let urlsEncontradas = [];
+        
+        // Extraer estrictamente UN SOLO link por cada calidad
+        const match720 = regex720.exec(texto);
+        if (match720) urlsEncontradas.push(match720[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+
+        const match540 = regex540.exec(texto);
+        if (match540) urlsEncontradas.push(match540[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+
+        const match360 = regex360.exec(texto);
+        if (match360) urlsEncontradas.push(match360[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+
         const matchS = regexSubs.exec(texto);
 
         if(urlsEncontradas.length === 0) {
-            return alert("No se localizó ningún flujo m3u8 en calidad [720P] ni [540P].");
+            return alert("No se localizó ningún enlace de video m3u8 compatible.");
         }
 
         let subsUrl = matchS ? matchS[1] : '';
         
-        // Al usar solo los enlaces únicos y limpios, reducimos el enlace final a más de la mitad
+        // Empaquetar lista limpia (máximo 3 links en total)
         const listaVideosEncoded = encodeURIComponent(urlsEncontradas.join(','));
-
         const urlBase = window.location.href.split('?')[0];
         
-        // Armar el enlace optimizado súper corto
         let urlFinal = `${urlBase}?videos=${listaVideosEncoded}`;
         if(subsUrl) {
             urlFinal += `&subs=${encodeURIComponent(subsUrl)}`;
