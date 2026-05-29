@@ -45,6 +45,16 @@
         
         .plyr__captions { pointer-events: none; padding: 25px !important; bottom: 5% !important; }
         .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.75) !important; color: #ffffff !important; font-size: 22px !important; font-weight: bold !important; padding: 6px 16px !important; border-radius: 5px; text-shadow: 3px 3px 5px rgba(0,0,0,0.9) !important; display: inline-block !important; }
+
+        /* VENTANA FLOTANTE DE AVISOS DE CHIBIMARIS */
+        .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+        .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
+        .custom-alert-box { background: var(--bg-card); border: 2px solid var(--orange-crunchy); border-radius: 8px; width: 88%; max-width: 380px; padding: 25px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.8); transform: scale(0.85); transition: transform 0.2s ease; }
+        .custom-alert-overlay.active .custom-alert-box { transform: scale(1); }
+        .custom-alert-title { color: var(--orange-crunchy); font-size: 19px; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-family: sans-serif; }
+        .custom-alert-msg { color: var(--text-main); font-size: 14px; line-height: 1.5; margin-bottom: 22px; }
+        .custom-alert-btn { background: var(--orange-crunchy); color: #fff; border: none; padding: 11px 30px; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-size: 13px; transition: background 0.2s; box-shadow: 0 4px 10px rgba(244, 117, 33, 0.3); }
+        .custom-alert-btn:hover { background: var(--orange-hover); }
     </style>
 </head>
 <body>
@@ -73,15 +83,33 @@
     </div>
 </div>
 
+<div id="customAlert" class="custom-alert-overlay">
+    <div class="custom-alert-box">
+        <div class="custom-alert-title">Chibimaris</div>
+        <div id="alertMessage" class="custom-alert-msg"></div>
+        <button class="custom-alert-btn" onclick="cerrarAlerta()">Aceptar</button>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
 <script>
+    // Lanzador único de alertas del sistema
+    function chibimarisAviso(mensaje) {
+        document.getElementById('alertMessage').innerText = mensaje;
+        document.getElementById('customAlert').classList.add('active');
+    }
+
+    function cerrarAlerta() {
+        document.getElementById('customAlert').classList.remove('active');
+    }
+
     function procesarCorto() {
         const texto = document.getElementById('rawInput').value.trim();
-        if(!texto) return alert("Por favor pega el bloque de texto.");
+        // Advertencia 1: Sin texto pegado
+        if(!texto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los enlaces para continuar.");
 
-        // Expresiones regulares mejoradas para saltarse espacios y saltos de línea (\s*)
         const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
         const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
         const regex360 = /\[360P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
@@ -89,7 +117,6 @@
 
         let urlsEncontradas = [];
         
-        // Extraer estrictamente UN SOLO link por cada calidad
         const match720 = regex720.exec(texto);
         if (match720) urlsEncontradas.push(match720[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
 
@@ -101,13 +128,13 @@
 
         const matchS = regexSubs.exec(texto);
 
+        // Advertencia 2: Sin enlaces compatibles encontrados
         if(urlsEncontradas.length === 0) {
-            return alert("No se localizó ningún enlace de video m3u8 compatible.");
+            return chibimarisAviso("❌ No se localizó ningún formato m3u8 válido en la información introducida.");
         }
 
         let subsUrl = matchS ? matchS[1] : '';
         
-        // Empaquetar lista limpia (máximo 3 links en total)
         const listaVideosEncoded = encodeURIComponent(urlsEncontradas.join(','));
         const urlBase = window.location.href.split('?')[0];
         
@@ -264,7 +291,8 @@
             cargarServidorHLS(listaVideos[urlActualIdx]);
         } else {
             document.getElementById('loadingMessage').innerText = "❌ Enlaces no disponibles.";
-            alert("Los servidores de streaming no responden.");
+            // Advertencia 3: Caída total de transmisión (Aviso solicitado)
+            chibimarisAviso("Lo sentimos parece que el servidor no responde :(");
         }
     }
 
