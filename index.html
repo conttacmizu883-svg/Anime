@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chibimaris: Anime Onl - Panel Premium</title>
+    <title>Chibimaris: Anime Onl</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
     <style>
         :root {
@@ -14,15 +14,15 @@
             --text-main: #f8fafc;
             --text-muted: #a1a1aa;
             
-            /* Colores de la interfaz de Plyr */
+            /* Interfaz Plyr estilo Crunchyroll */
             --plyr-color-main: #f47521;
             --plyr-video-background: #000000;
             --plyr-menu-background: #23252b;
             --plyr-menu-color: #ffffff;
         }
-        html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; }
+        html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow-x: hidden; }
         
-        /* MODO PANEL */
+        /* MODO PANEL GENERADOR */
         .panel-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
         .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
@@ -32,29 +32,23 @@
         button:hover { background-color: var(--orange-hover); }
         .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
         .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
-        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--orange-crunchy); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; }
+        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--orange-crunchy); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; }
         
-        /* MODO REPRODUCTOR PREMIUM */
-        .player-mode { width: 100%; height: 100%; display: none; background: #000; position: relative; box-sizing: border-box; padding: 20px; }
-        .player-header { max-width: 900px; margin: 0 auto 15px auto; display: flex; flex-direction: column; gap: 5px; }
-        .player-title { color: #fff; font-size: 22px; font-weight: bold; text-transform: uppercase; margin: 0; }
-        .player-title span { color: var(--orange-crunchy); }
-        .stream-info-box { background: var(--bg-card); border: 1px solid #2d2e33; padding: 12px; border-radius: 4px; max-width: 320px; margin-bottom: 15px; }
-        .stream-info-box label { font-size: 12px; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 5px; }
-        .stream-url-display { font-size: 11px; color: #fff; background: var(--bg-dark); padding: 8px; border-radius: 3px; border: 1px solid #3a3b40; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; }
-        .btn-copy { background: #3a3b40; padding: 6px; font-size: 12px; margin-top: 6px; text-transform: none; }
-        
-        .video-wrapper { max-width: 900px; margin: 0 auto; position: relative; width: 100%; background: #000; border-radius: 4px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
-        video { width: 100%; display: block; }
+        /* MODO REPRODUCTOR (SOLO EL REPRODUCTOR A PANTALLA COMPLETA) */
+        .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
+        .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
+        video { width: 100%; height: 100%; object-fit: contain; display: block; }
         
         /* ANIMACIÓN DE CARGA (SPINNER) */
         .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 21, 25, 0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.3s; opacity: 0; }
-        .spinner { width: 60px; height: 60px; border: 6px solid rgba(244, 117, 33, 0.2); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 1s linear infinite; }
-        .loading-text { color: #fff; margin-top: 15px; font-size: 16px; font-weight: bold; letter-spacing: 0.5px; }
+        .spinner { width: 55px; height: 55px; border: 5px solid rgba(244, 117, 33, 0.15); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 0.9s linear infinite; }
+        .loading-text { color: #fff; margin-top: 15px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; }
         
         @keyframes girar { to { transform: rotate(360deg); } }
         .is-loading .loading-overlay { opacity: 1; }
-        .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.85) !important; color: #ffffff !important; font-size: 19px !important; font-weight: 600; padding: 5px 15px !important; border-radius: 4px; }
+        
+        /* Personalización de Subtítulos */
+        .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.8) !important; color: #ffffff !important; font-size: 18px !important; font-weight: 600; padding: 6px 14px !important; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -74,15 +68,6 @@
 </div>
 
 <div id="viewReproductor" class="player-mode">
-    <div class="player-header">
-        <h2 class="player-title">Chibimaris: <span>Anime Onl</span></h2>
-        <div class="stream-info-box">
-            <label>Direct .m3u8 video stream</label>
-            <div id="streamUrlText" class="stream-url-display">Cargando stream...</div>
-            <button class="btn-copy" onclick="copiarStreamUrl()">Copiar enlace</button>
-        </div>
-    </div>
-    
     <div id="videoContainer" class="video-wrapper">
         <div class="loading-overlay">
             <div class="spinner"></div>
@@ -118,18 +103,13 @@
         document.getElementById('resultArea').style.display = 'block';
     }
 
-    function copiarStreamUrl() {
-        const text = document.getElementById('streamUrlText').innerText;
-        navigator.clipboard.writeText(text);
-        alert("¡Enlace .m3u8 copiado al portapapeles!");
-    }
-
     window.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const videoParam = urlParams.get('video');
         const subsParam = urlParams.get('subs');
 
         if (videoParam) {
+            // Activar visualización única del reproductor
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
             
@@ -137,14 +117,13 @@
             const container = document.getElementById('videoContainer');
             const streamUrl = decodeURIComponent(videoParam);
             
-            document.getElementById('streamUrlText').innerText = streamUrl;
-            
-            // Control de animación de carga
+            // Animación de carga inteligente
             container.classList.add('is-loading');
             videoElement.addEventListener('waiting', () => container.classList.add('is-loading'));
             videoElement.addEventListener('playing', () => container.classList.remove('is-loading'));
             videoElement.addEventListener('canplay', () => container.classList.remove('is-loading'));
 
+            // Inyectar pista de subtítulos si existe
             if(subsParam) {
                 let track = document.createElement('track');
                 track.kind = 'captions';
@@ -155,11 +134,12 @@
                 videoElement.appendChild(track);
             }
 
-            // Configurar Plyr con menú de calidad y subtítulos completos
+            // Inicializar Plyr con controles obligatorios de Ajustes y Captions
             let player = new Plyr('#player', {
                 captions: { active: true, update: true, language: 'es' },
                 controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'fullscreen'],
-                settings: ['captions', 'quality']
+                settings: ['captions', 'quality'],
+                seekTime: 10
             });
 
             if (Hls.isSupported()) {
@@ -170,35 +150,39 @@
                 hls.loadSource(streamUrl);
                 hls.attachMedia(videoElement);
                 
-                // Conectar calidades del archivo m3u8 a Plyr de forma dinámica
+                // Mapear dinámicamente las calidades del streaming m3u8 para activar la tuerca (⚙️)
                 hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                    const availableQualities = data.levels.map(l => l.height);
-                    availableQualities.unshift(0); // Añadir opción 'Auto'
+                    // Extraer resoluciones disponibles en el archivo
+                    const calidadesDisponibles = data.levels.map(l => l.height).filter(h => h > 0);
                     
+                    // Ordenar de mayor a menor y añadir opción 'Auto'
+                    calidadesDisponibles.sort((a, b) => b - a);
+                    calidadesDisponibles.unshift(0); 
+                    
+                    // Forzar a Plyr a renderizar el menú de calidad
                     player.config.quality = {
                         default: 0,
-                        options: availableQualities,
+                        options: calidadesDisponibles,
                         forced: true,
-                        onChange: (e) => updateQuality(e, hls)
+                        onChange: (q) => {
+                            if (q === 0) {
+                                hls.currentLevel = -1; // Auto
+                            } else {
+                                hls.levels.forEach((level, index) => {
+                                    if (level.height === q) hls.currentLevel = index;
+                                });
+                            }
+                        }
                     };
+                    
+                    // Actualizar la interfaz del menú de Plyr manualmente
+                    player.setCamera = player.setCamera; 
                 });
             } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
                 videoElement.src = streamUrl;
             }
         }
     });
-
-    function updateQuality(newQuality, hlsInstance) {
-        if (newQuality === 0) {
-            hlsInstance.currentLevel = -1; // Modo Auto
-        } else {
-            hlsInstance.levels.forEach((level, levelIndex) => {
-                if (level.height === newQuality) {
-                    hlsInstance.currentLevel = levelIndex;
-                }
-            });
-        }
-    }
 
     async function corregirSrtAVtt(url) {
         try {
