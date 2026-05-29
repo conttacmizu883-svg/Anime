@@ -25,13 +25,13 @@
         .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
         h1 span { color: #fff; }
-        textarea { width: 100%; height: 180px; background-color: var(--bg-dark); color: #fff; border: 1px solid #3a3b40; border-radius: 4px; padding: 12px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: none; }
+        textarea { width: 100%; height: 220px; background-color: var(--bg-dark); color: #fff; border: 1px solid #3a3b40; border-radius: 4px; padding: 12px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: none; }
         button { width: 100%; background-color: var(--orange-crunchy); color: #fff; border: none; padding: 14px; font-size: 16px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; margin-top: 15px; transition: 0.2s; }
         button:hover { background-color: var(--orange-hover); }
         .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
         .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
         
-        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--text-main); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; white-space: pre-wrap; line-height: 1.5; }
+        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--text-main); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; white-space: pre-wrap; line-height: 1.5; max-height: 300px; overflow-y: auto; }
         .output-link span.link-color { color: var(--orange-crunchy); }
 
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
@@ -63,14 +63,14 @@
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Filtro Estricto: Solo una calidad de 720P, 540P y 360P (Sin Duplicados).</p>
-        <textarea id="rawInput" placeholder="Pega el bloque completo del episodio aquí..."></textarea>
-        <button onclick="procesarCorto()">Generar Enlace Corto Limpio</button>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador Masivo: Puedes pegar múltiples episodios juntos.</p>
+        <textarea id="rawInput" placeholder="Pega aquí todos los episodios juntos...&#10;&#10;Ejemplo:&#10;=== EPISODIO 1 ===&#10;[720P] https://...&#10;&#10;=== EPISODIO 2 ===&#10;[720P] https://..."></textarea>
+        <button onclick="procesarMasivo()">Generar Lista de Episodios Organizada</button>
         
         <div id="resultArea" class="result-box">
-            <span class="output-title">📱 Formato de Salida Listo:</span>
+            <span class="output-title">📱 Lista Completa de Salida Lista:</span>
             <div id="linkOutput" class="output-link"></div>
-            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Texto</button>
+            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Bloque de Texto</button>
         </div>
     </div>
 </div>
@@ -108,40 +108,70 @@
         document.getElementById('customAlert').classList.remove('active');
     }
 
-    function procesarCorto() {
-        const texto = document.getElementById('rawInput').value.trim();
-        if(!texto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los enlaces para continuar.");
+    function procesarMasivo() {
+        const textoCompleto = document.getElementById('rawInput').value.trim();
+        if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los episodios.");
 
-        const matchEpisodio = texto.match(/(?:episodio|capitulo|cap|ep)\s*(\d+)/i);
-        const numeroEpisodio = matchEpisodio ? matchEpisodio[1] : "1";
-
-        const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-        const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-        const regex360 = /\[360P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-
-        let urlsEncontradas = [];
+        // Separar el texto usando como guía los encabezados de episodios "=== EPISODIOX ===" o similares
+        const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*)/i);
         
-        const match720 = regex720.exec(texto);
-        if (match720) urlsEncontradas.push(match720[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
-
-        const match540 = regex540.exec(texto);
-        if (match540) urlsEncontradas.push(match540[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
-
-        const match360 = regex360.exec(texto);
-        if (match360) urlsEncontradas.push(match360[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
-
-        if(urlsEncontradas.length === 0) {
-            return chibimarisAviso("❌ No se localizó ningún formato m3u8 válido en la información introducida.");
+        if (bloques.length < 2) {
+            return chibimarisAviso("❌ No se detectó la estructura '=== EPISODIO X ==='. Revisa cómo pegaste los capítulos.");
         }
-        
-        const listaVideosEncoded = encodeURIComponent(urlsEncontradas.join(','));
-        const urlBase = window.location.href.split('?')[0];
-        
-        let urlFinal = `${urlBase}?videos=${listaVideosEncoded}`;
 
-        textoResultadoGlobal = `=== EPISODIO ${numeroEpisodio} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`;
+        let resultadosTexto = [];
+        let resultadosHTML = [];
+        let urlBase = window.location.href.split('?')[0];
 
-        document.getElementById('linkOutput').innerHTML = `=== EPISODIO ${numeroEpisodio} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`;
+        // Recorrer los bloques encontrados
+        for (let i = 1; i < bloques.length; i += 2) {
+            let encabezadoOriginal = bloques[i].trim();
+            let contenidoEpisodio = bloques[i + 1];
+
+            if (!contenidoEpisodio) continue;
+
+            // Limpiar y estandarizar el título a la estructura que pediste
+            const matchNumero = encabezadoOriginal.match(/\d+/);
+            const numeroEp = matchNumero ? matchNumero[0] : "1";
+            let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
+
+            // Extraer calidades m3u8
+            const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
+            const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
+            const regex360 = /\[360P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
+
+            let urlsEncontradas = [];
+            
+            const match720 = regex720.exec(contenidoEpisodio);
+            if (match720) urlsEncontradas.push(match720[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+
+            const match540 = regex540.exec(contenidoEpisodio);
+            if (match540) urlsEncontradas.push(match540[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+
+            const match360 = regex360.exec(contenidoEpisodio);
+            if (match360) urlsEncontradas.push(match360[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+
+            // Si este bloque en específico tiene enlaces válidos, se genera
+            if (urlsEncontradas.length > 0) {
+                let listaVideosEncoded = encodeURIComponent(urlsEncontradas.join(','));
+                let urlFinal = `${urlBase}?videos=${listaVideosEncoded}`;
+
+                // Construcción para copiar
+                resultadosTexto.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
+                
+                // Construcción visual con color naranja para la web
+                resultadosHTML.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`);
+            }
+        }
+
+        if(resultadosTexto.length === 0) {
+            return chibimarisAviso("❌ No se encontraron enlaces m3u8 válidos en ninguno de los episodios.");
+        }
+
+        // Unir todos los episodios procesados dejando dos saltos de línea de espacio entre ellos
+        textoResultadoGlobal = resultadosTexto.join("\n\n");
+        
+        document.getElementById('linkOutput').innerHTML = resultadosHTML.join("\n\n");
         document.getElementById('resultArea').style.display = 'block';
     }
 
@@ -149,9 +179,9 @@
         if(!textoResultadoGlobal) return;
         
         navigator.clipboard.writeText(textoResultadoGlobal).then(() => {
-            chibimarisAviso("📋 ¡Texto copiado con éxito al portapapeles!");
+            chibimarisAviso("📋 ¡Toda la lista de episodios ha sido copiada!");
         }).catch(() => {
-            chibimarisAviso("❌ No se pudo copiar automáticamente, por favor selecciónalo manualmente.");
+            chibimarisAviso("❌ No se pudo copiar automáticamente.");
         });
     }
 
@@ -201,7 +231,6 @@
     function cargarServidorHLS(streamUrl) {
         document.getElementById('loadingMessage').innerText = `Conectando... (Servidor ${urlActualIdx + 1}/${listaVideos.length})`;
         
-        // Removido todo el menú y lógicas de los subtítulos de Plyr
         const defaultOptions = {
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
             settings: ['quality']
