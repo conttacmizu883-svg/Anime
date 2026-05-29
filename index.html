@@ -13,6 +13,12 @@
             --bg-card: #23252b;
             --text-main: #f8fafc;
             --text-muted: #a1a1aa;
+            
+            /* Forzar colores de Crunchyroll en Plyr */
+            --plyr-color-main: #f47521;
+            --plyr-video-background: #000000;
+            --plyr-menu-background: #23252b;
+            --plyr-menu-color: #ffffff;
         }
         html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; }
         .panel-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
@@ -25,8 +31,9 @@
         .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
         .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
         .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--orange-crunchy); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; user-select: all; font-family: monospace; }
+        
         .player-mode { width: 100%; height: 100%; display: none; background: #000; }
-        .player-mode video { width: 100%; height: 100%; }
+        .player-mode video { width: 100%; height: 100%; display: block; }
         .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.8) !important; color: #ffffff !important; font-size: 20px !important; font-weight: 600; }
     </style>
 </head>
@@ -47,23 +54,20 @@
 </div>
 
 <div id="viewReproductor" class="player-mode">
-    <video id="player" controls crossorigin playsinline></video>
+    <video id="player" crossorigin playsinline webkit-playsinline></video>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
 <script>
-    // --- PROCESAR ENLACE CORTO ---
     function procesarCorto() {
         const texto = document.getElementById('rawInput').value.trim();
         if(!texto) return alert("Pega el texto primero.");
 
-        // Extraer el primer video 720p disponible
         const regexVideo = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
         const matchV = regexVideo.exec(texto);
         
-        // Extraer los subtítulos en Español
         const regexSubs = /\[Español\]\s*(https?:\/\/[^\s"']+\.srt[^\s"']*)/i;
         const matchS = regexSubs.exec(texto);
 
@@ -72,7 +76,6 @@
         let videoUrl = matchV[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&');
         let subsUrl = matchS ? matchS[1] : '';
 
-        // Construir URL corta limpia
         const urlBase = window.location.href.split('?')[0];
         const urlFinal = `${urlBase}?video=${encodeURIComponent(videoUrl)}&subs=${encodeURIComponent(subsUrl)}`;
 
@@ -80,7 +83,6 @@
         document.getElementById('resultArea').style.display = 'block';
     }
 
-    // --- MODO REPRODUCTOR AUTOMÁTICO ---
     window.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const videoParam = urlParams.get('video');
@@ -92,7 +94,6 @@
             
             const videoElement = document.getElementById('player');
             
-            // Añadir subtítulos en español si existen
             if(subsParam) {
                 let track = document.createElement('track');
                 track.kind = 'captions';
@@ -103,22 +104,21 @@
                 videoElement.appendChild(track);
             }
 
-            // Inicializar Plyr con color Crunchyroll
+            // Inicializar Plyr asegurando controles de calidad, subtítulos y settings
             let player = new Plyr('#player', {
                 captions: { active: true, update: true, language: 'es' },
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'fullscreen']
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'fullscreen'],
+                settings: ['captions', 'quality']
             });
 
-            // Cargar Streaming HLS (.m3u8)
             let streamUrl = decodeURIComponent(videoParam);
             if (Hls.isSupported()) {
                 let hls = new Hls();
                 hls.loadSource(streamUrl);
                 hls.attachMedia(videoElement);
-                hls.on(Hls.Events.MANIFEST_PARSED, () => player.play());
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {});
             } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
                 videoElement.src = streamUrl;
-                videoElement.addEventListener('loadedmetadata', () => player.play());
             }
         }
     });
