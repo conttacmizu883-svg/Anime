@@ -14,6 +14,7 @@
             --text-main: #f8fafc;
             --text-muted: #a1a1aa;
             
+            /* Interfaz Plyr estilo Crunchyroll */
             --plyr-color-main: #f47521;
             --plyr-video-background: #000000;
             --plyr-menu-background: #23252b;
@@ -21,6 +22,7 @@
         }
         html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         
+        /* MODO PANEL GENERADOR */
         .panel-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; height: 100%; overflow-y: auto; box-sizing: border-box; }
         .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
@@ -32,17 +34,20 @@
         .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
         .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--orange-crunchy); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; }
         
+        /* MODO REPRODUCTOR EXCLUSIVO */
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
         .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
         video { width: 100%; height: 100%; object-fit: contain; display: block; }
         
+        /* ANIMACIÓN DE CARGA (SPINNER) */
         .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 21, 25, 0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.3s; opacity: 0; }
         .spinner { width: 55px; height: 55px; border: 5px solid rgba(244, 117, 33, 0.15); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 0.9s linear infinite; }
-        .loading-text { color: #fff; margin-top: 15px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; }
+        .loading-text { color: #fff; margin-top: 15px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; text-align: center; padding: 0 10px; }
         
         @keyframes girar { to { transform: rotate(360deg); } }
         .is-loading .loading-overlay { opacity: 1; }
         
+        /* Personalización de Subtítulos */
         .plyr__captions { pointer-events: none; padding: 20px !important; }
         .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.75) !important; color: #ffffff !important; font-size: 20px !important; font-weight: bold !important; padding: 6px 16px !important; border-radius: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,1) !important; display: inline-block !important; }
     </style>
@@ -52,7 +57,7 @@
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador de enlaces optimizados y forzados.</p>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador con sistema Auto-Respaldo de servidores.</p>
         <textarea id="rawInput" placeholder="Pega el bloque completo con los links aquí..."></textarea>
         <button onclick="procesarCorto()">Generar Enlace Seguro</button>
         
@@ -67,7 +72,7 @@
     <div id="videoContainer" class="video-wrapper">
         <div class="loading-overlay">
             <div class="spinner"></div>
-            <div class="loading-text">Cargando Video...</div>
+            <div id="loadingMessage" class="loading-text">Cargando Video...</div>
         </div>
         <video id="player" crossorigin="anonymous" playsinline webkit-playsinline></video>
     </div>
@@ -81,53 +86,85 @@
         const texto = document.getElementById('rawInput').value.trim();
         if(!texto) return alert("Por favor pega el bloque de texto.");
 
-        const regexVideo = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-        const matchV = regexVideo.exec(texto);
+        // Buscar todos los enlaces de 720P y 540P de forma global
+        const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/gi;
+        const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/gi;
         
+        let urlsEncontradas = [];
+        let match;
+
+        // Extraer los 720p prioritarios
+        while ((match = regex720.exec(texto)) !== null) {
+            urlsEncontradas.push(match[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+        }
+        // Extraer los 540p de respaldo secundario
+        while ((match = regex540.exec(texto)) !== null) {
+            urlsEncontradas.push(match[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+        }
+
         const regexSubs = /\[Español\]\s*(https?:\/\/[^\s"']+\.srt[^\s"']*)/i;
         const matchS = regexSubs.exec(texto);
 
-        if(!matchV) return alert("No se localizó un flujo m3u8 en calidad [720P].");
+        if(urlsEncontradas.length === 0) {
+            return alert("No se localizó ningún flujo m3u8 en calidad [720P] ni [540P].");
+        }
 
-        let videoUrl = matchV[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&');
         let subsUrl = matchS ? matchS[1] : '';
 
+        // Unimos los servidores encontrados usando una coma como separador oculto
+        const listaVideosEncoded = encodeURIComponent(urlsEncontradas.join(','));
+
         const urlBase = window.location.href.split('?')[0];
-        const urlFinal = `${urlBase}?video=${encodeURIComponent(videoUrl)}&subs=${encodeURIComponent(subsUrl)}`;
+        const urlFinal = `${urlBase}?videos=${listaVideosEncoded}&subs=${encodeURIComponent(subsUrl)}`;
 
         document.getElementById('linkOutput').innerText = urlFinal;
         document.getElementById('resultArea').style.display = 'block';
     }
 
+    // VARIABLES GLOBALES DE FLUJO
+    let listaVideos = [];
+    let urlActualIdx = 0;
+    let player;
+    let hls;
+    let videoElement;
+    let container;
+    let timeoutsDeCarga;
+
     window.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const videoParam = urlParams.get('video');
+        const videosParam = urlParams.get('videos'); 
         const subsParam = urlParams.get('subs');
 
-        if (videoParam) {
+        if (videosParam) {
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
             
-            const videoElement = document.getElementById('player');
-            const container = document.getElementById('videoContainer');
-            const streamUrl = decodeURIComponent(videoParam);
+            videoElement = document.getElementById('player');
+            container = document.getElementById('videoContainer');
             
+            // Decodificar la lista completa de servidores disponibles
+            listaVideos = decodeURIComponent(videosParam).split(',');
+            urlActualIdx = 0;
+
             container.classList.add('is-loading');
-            videoElement.addEventListener('waiting', () => container.classList.add('is-loading'));
-            videoElement.addEventListener('playing', () => container.classList.remove('is-loading'));
-            videoElement.addEventListener('canplay', () => container.classList.remove('is-loading'));
+            
+            // Listener ante congelamiento de reproducción por caída tardía del enlace
+            videoElement.addEventListener('waiting', () => {
+                container.classList.add('is-loading');
+                activarTemporizadorFallo();
+            });
+            videoElement.addEventListener('playing', () => {
+                container.classList.remove('is-loading');
+                clearTimeout(timeoutsDeCarga);
+            });
+            videoElement.addEventListener('canplay', () => {
+                container.classList.remove('is-loading');
+                clearTimeout(timeoutsDeCarga);
+            });
 
-            // ========== CONFIGURACIÓN DE CALIDADES PARA PLYR ==========
-            const defaultOptions = {
-                captions: { active: true, update: true, language: 'es' },
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'fullscreen'],
-                settings: ['captions', 'quality']
-            };
-
-            // Si hay subtítulos, preparar el track ANTES de inicializar Plyr
-            let vttUrl = '';
+            // Configurar subtítulos
             if(subsParam) {
-                vttUrl = await corregirSrtAVtt(decodeURIComponent(subsParam));
+                let vttUrl = await corregirSrtAVtt(decodeURIComponent(subsParam));
                 let track = document.createElement('track');
                 track.kind = 'captions';
                 track.label = 'Español';
@@ -137,116 +174,146 @@
                 videoElement.appendChild(track);
             }
 
-            // ========== INICIALIZAR PLYR CON HLS ==========
-            let player;
-            let hls;
-
-            if (Hls.isSupported()) {
-                hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 600 });
-                hls.loadSource(streamUrl);
-                hls.attachMedia(videoElement);
-
-                hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                    // Extraer calidades disponibles
-                    const availableQualities = data.levels.map(l => l.height).filter(h => h > 0);
-                    availableQualities.sort((a, b) => b - a);
-                    
-                    // Calidad por defecto: 720p o la más alta disponible
-                    let defaultQuality = availableQualities.includes(720) ? 720 : availableQualities[0];
-                    
-                    // Agregar "Auto" (0) al inicio
-                    const qualityOptions = [0, ...availableQualities];
-                    
-                    // ========== CONFIGURAR PLYR CON CALIDADES DINÁMICAS ==========
-                    const options = {
-                        ...defaultOptions,
-                        quality: {
-                            default: defaultQuality,
-                            options: qualityOptions,
-                            forced: true,
-                            onChange: (q) => {
-                                if (q === 0) {
-                                    hls.currentLevel = -1; // Auto
-                                } else {
-                                    hls.levels.forEach((lvl, idx) => {
-                                        if (lvl.height === q) hls.currentLevel = idx;
-                                    });
-                                }
-                            }
-                        }
-                    };
-
-                    // Inicializar Plyr AHORA con las calidades configuradas
-                    player = new Plyr('#player', options);
-
-                    // Fijar calidad inicial
-                    if (defaultQuality !== 0) {
-                        hls.levels.forEach((lvl, idx) => {
-                            if (lvl.height === defaultQuality) hls.currentLevel = idx;
-                        });
-                    }
-
-                    // ========== FORZAR SUBTÍTULOS SIEMPRE ACTIVOS ==========
-                    player.on('ready', () => {
-                        // Activar subtítulos inmediatamente
-                        setTimeout(() => {
-                            if (player.captions) {
-                                player.currentTrack = 0;
-                                player.toggleCaptions(true);
-                            }
-                        }, 300);
-                    });
-
-                    // Forzar subtítulos en cada reproducción
-                    player.on('play', () => {
-                        setTimeout(() => {
-                            if (player.captions) {
-                                player.currentTrack = 0;
-                                player.toggleCaptions(true);
-                            }
-                        }, 500);
-                    });
-
-                    // ========== PANTALLA COMPLETA HORIZONTAL FORZADA ==========
-                    player.on('enterfullscreen', () => {
-                        // Forzar orientación landscape en móviles
-                        if (screen.orientation && screen.orientation.lock) {
-                            screen.orientation.lock('landscape').catch(() => {});
-                        }
-                        // Para webview/apps: forzar rotación vía CSS
-                        document.body.style.transform = 'rotate(0deg)';
-                    });
-
-                    player.on('exitfullscreen', () => {
-                        if (screen.orientation && screen.orientation.unlock) {
-                            screen.orientation.unlock();
-                        }
-                    });
-
-                    // Ocultar loader inicial
-                    container.classList.remove('is-loading');
-                });
-
-                hls.on(Hls.Events.ERROR, (event, data) => {
-                    if (data.fatal) {
-                        console.error('Error HLS:', data);
-                    }
-                });
-
-            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-                // Safari nativo
-                videoElement.src = streamUrl;
-                player = new Plyr('#player', defaultOptions);
-            }
+            // Iniciar la carga del primer servidor
+            cargarServidorHLS(listaVideos[urlActualIdx]);
         }
     });
 
+    function cargarServidorHLS(streamUrl) {
+        document.getElementById('loadingMessage').innerText = `Iniciando reproducción... (Servidor ${urlActualIdx + 1}/${listaVideos.length})`;
+        
+        const defaultOptions = {
+            captions: { active: true, update: true, language: 'es' },
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'fullscreen'],
+            settings: ['captions', 'quality']
+        };
+
+        if (hls) { hls.destroy(); }
+
+        if (Hls.isSupported()) {
+            hls = new Hls({ maxBufferLength: 20, maxMaxBufferLength: 300, manifestLoadingMaxRetry: 1, levelLoadingMaxRetry: 1 });
+            hls.loadSource(streamUrl);
+            hls.attachMedia(videoElement);
+
+            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                const availableQualities = data.levels.map(l => l.height).filter(h => h > 0);
+                availableQualities.sort((a, b) => b - a);
+                
+                let defaultQuality = availableQualities.includes(720) ? 720 : (availableQualities.includes(540) ? 540 : availableQualities[0]);
+                const qualityOptions = [0, ...availableQualities];
+                
+                const options = {
+                    ...defaultOptions,
+                    quality: {
+                        default: defaultQuality,
+                        options: qualityOptions,
+                        forced: true,
+                        onChange: (q) => {
+                            if (q === 0) hls.currentLevel = -1;
+                            else {
+                                hls.levels.forEach((lvl, idx) => {
+                                    if (lvl.height === q) hls.currentLevel = idx;
+                                });
+                            }
+                        }
+                    }
+                };
+
+                if (!player) {
+                    player = new Plyr('#player', options);
+                    configurarEventosPlayer();
+                }
+
+                if (defaultQuality !== 0) {
+                    hls.levels.forEach((lvl, idx) => {
+                        if (lvl.height === defaultQuality) hls.currentLevel = idx;
+                    });
+                }
+                
+                videoElement.play().catch(() => {});
+            });
+
+            // GESTIÓN DE ERRORES: Si el enlace está roto o bloqueado saltará al siguiente
+            hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.warn("Fallo crítico en el enlace actual, cambiando de servidor...");
+                    intentarSiguienteServidor();
+                }
+            });
+
+            // Disparar contador de seguridad por si se queda en bucle infinito de carga inicial
+            activarTemporizadorFallo();
+
+        } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+            videoElement.src = streamUrl;
+            if(!player) {
+                player = new Plyr('#player', defaultOptions);
+                configurarEventosPlayer();
+            }
+            videoElement.play().catch(() => {});
+        }
+    }
+
+    function activarTemporizadorFallo() {
+        clearTimeout(timeoutsDeCarga);
+        // Si el video pasa más de 7 segundos intentando conectar sin dar Play, asume caída y brinca de link
+        timeoutsDeCarga = setTimeout(() => {
+            if (videoElement.paused && container.classList.contains('is-loading')) {
+                console.warn("Tiempo de espera agotado para el servidor actual.");
+                intentarSiguienteServidor();
+            }
+        }, 7000);
+    }
+
+    function intentarSiguienteServidor() {
+        clearTimeout(timeoutsDeCarga);
+        urlActualIdx++;
+        if (urlActualIdx < listaVideos.length) {
+            container.classList.add('is-loading');
+            document.getElementById('loadingMessage').innerText = `Servidor lento o caído. Conectando al Respaldo ${urlActualIdx + 1}...`;
+            cargarServidorHLS(listaVideos[urlActualIdx]);
+        } else {
+            document.getElementById('loadingMessage').innerText = "❌ Todos los servidores de este capítulo están caídos.";
+            alert("No se pudo reproducir el dorama. Todos los servidores de vídeo asignados fallaron.");
+        }
+    }
+
+    function configurarEventosPlayer() {
+        player.on('ready', () => {
+            setTimeout(() => {
+                if (player.captions) {
+                    player.currentTrack = 0;
+                    player.toggleCaptions(true);
+                }
+            }, 300);
+        });
+
+        player.on('play', () => {
+            setTimeout(() => {
+                if (player.captions) {
+                    player.currentTrack = 0;
+                    player.toggleCaptions(true);
+                }
+            }, 400);
+        });
+
+        player.on('enterfullscreen', () => {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(() => {});
+            }
+        });
+
+        player.on('exitfullscreen', () => {
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
+            }
+        });
+    }
+
     async function corregirSrtAVtt(url) {
         try {
-            // Proxy CORS
             const proxyUrl = "https://cors-anywhere.herokuapp.com/";
             let t;
-            
             try {
                 const r = await fetch(url);
                 t = await r.text();
@@ -254,13 +321,10 @@
                 const r = await fetch(proxyUrl + url);
                 t = await r.text();
             }
-
             if(!t || t.includes('<html')) {
                 const r = await fetch(proxyUrl + url);
                 t = await r.text();
             }
-
-            // Convertir SRT a VTT
             let vtt = "WEBVTT\n\n" + t
                 .replace(/\r\n/g, '\n')
                 .replace(/\r/g, '\n')
@@ -269,7 +333,6 @@
 
             return URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' }));
         } catch(e) { 
-            console.error('Error subtítulos:', e);
             return url; 
         }
     }
