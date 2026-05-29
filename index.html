@@ -30,7 +30,13 @@
         button:hover { background-color: var(--orange-hover); }
         .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
         .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
-        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--orange-crunchy); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; }
+        
+        /* Ajuste para que el recuadro respete los saltos de línea del ejemplo */
+        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--text-main); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; white-space: pre-wrap; line-height: 1.5; }
+        .output-link span.link-color { color: var(--orange-crunchy); }
+
+        .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
+        .btn-copy:hover { background-color: #3a3d4a; }
         
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
         .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
@@ -67,8 +73,9 @@
         <button onclick="procesarCorto()">Generar Enlace Corto Limpio</button>
         
         <div id="resultArea" class="result-box">
-            <span class="output-title">📱 Enlace Optimizado Súper Corto:</span>
+            <span class="output-title">📱 Formato de Salida Listo:</span>
             <div id="linkOutput" class="output-link"></div>
+            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Texto</button>
         </div>
     </div>
 </div>
@@ -95,7 +102,8 @@
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
 <script>
-    // Lanzador único de alertas del sistema
+    let textoResultadoGlobal = ""; // Variable para guardar el texto limpio para copiar
+
     function chibimarisAviso(mensaje) {
         document.getElementById('alertMessage').innerText = mensaje;
         document.getElementById('customAlert').classList.add('active');
@@ -107,8 +115,11 @@
 
     function procesarCorto() {
         const texto = document.getElementById('rawInput').value.trim();
-        // Advertencia 1: Sin texto pegado
         if(!texto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los enlaces para continuar.");
+
+        // Intentar detectar si el usuario incluyó algún número de episodio en su texto original (Ej: "Episodio 5" o "Capitulo 12")
+        const matchEpisodio = texto.match(/(?:episodio|capitulo|cap|ep)\s*(\d+)/i);
+        const numeroEpisodio = matchEpisodio ? matchEpisodio[1] : "1";
 
         const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
         const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
@@ -128,7 +139,6 @@
 
         const matchS = regexSubs.exec(texto);
 
-        // Advertencia 2: Sin enlaces compatibles encontrados
         if(urlsEncontradas.length === 0) {
             return chibimarisAviso("❌ No se localizó ningún formato m3u8 válido en la información introducida.");
         }
@@ -143,8 +153,23 @@
             urlFinal += `&subs=${encodeURIComponent(subsUrl)}`;
         }
 
-        document.getElementById('linkOutput').innerText = urlFinal;
+        // CREACIÓN DE LA PLANTILLA EXACTA QUE PEDISTE
+        textoResultadoGlobal = `=== EPISODIO ${numeroEpisodio} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`;
+
+        // Mostrar en pantalla (con clase para resaltar el enlace en naranja si se desea)
+        document.getElementById('linkOutput').innerHTML = `=== EPISODIO ${numeroEpisodio} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`;
         document.getElementById('resultArea').style.display = 'block';
+    }
+
+    // NUEVA FUNCIÓN PARA COPIAR AUTOMÁTICAMENTE
+    function copiarAlPortapapeles() {
+        if(!textoResultadoGlobal) return;
+        
+        navigator.clipboard.writeText(textoResultadoGlobal).then(() => {
+            chibimarisAviso("📋 ¡Texto copiado con éxito al portapapeles!");
+        }).catch(() => {
+            chibimarisAviso("❌ No se pudo copiar automáticamente, por favor selecciónalo manualmente.");
+        });
     }
 
     let listaVideos = [];
@@ -291,7 +316,6 @@
             cargarServidorHLS(listaVideos[urlActualIdx]);
         } else {
             document.getElementById('loadingMessage').innerText = "❌ Enlaces no disponibles.";
-            // Advertencia 3: Caída total de transmisión (Aviso solicitado)
             chibimarisAviso("Lo sentimos parece que el servidor no responde :(");
         }
     }
