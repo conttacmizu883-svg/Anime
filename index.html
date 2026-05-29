@@ -109,7 +109,6 @@
         const subsParam = urlParams.get('subs');
 
         if (videoParam) {
-            // Activar visualización única del reproductor
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
             
@@ -117,29 +116,26 @@
             const container = document.getElementById('videoContainer');
             const streamUrl = decodeURIComponent(videoParam);
             
-            // Animación de carga inteligente
             container.classList.add('is-loading');
             videoElement.addEventListener('waiting', () => container.classList.add('is-loading'));
             videoElement.addEventListener('playing', () => container.classList.remove('is-loading'));
             videoElement.addEventListener('canplay', () => container.classList.remove('is-loading'));
 
-            // Inyectar pista de subtítulos si existe
             if(subsParam) {
                 let track = document.createElement('track');
                 track.kind = 'captions';
                 track.label = 'Español';
                 track.srclang = 'es';
-                track.default = true;
+                track.default = true; // Activa por defecto los subtítulos en el navegador
                 track.src = await corregirSrtAVtt(decodeURIComponent(subsParam));
                 videoElement.appendChild(track);
             }
 
-            // Inicializar Plyr con controles obligatorios de Ajustes y Captions
+            // Inicializar Plyr con FORZADO de subtítulos activos
             let player = new Plyr('#player', {
                 captions: { active: true, update: true, language: 'es' },
                 controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'fullscreen'],
-                settings: ['captions', 'quality'],
-                seekTime: 10
+                settings: ['captions', 'quality']
             });
 
             if (Hls.isSupported()) {
@@ -150,23 +146,23 @@
                 hls.loadSource(streamUrl);
                 hls.attachMedia(videoElement);
                 
-                // Mapear dinámicamente las calidades del streaming m3u8 para activar la tuerca (⚙️)
                 hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                    // Extraer resoluciones disponibles en el archivo
                     const calidadesDisponibles = data.levels.map(l => l.height).filter(h => h > 0);
-                    
-                    // Ordenar de mayor a menor y añadir opción 'Auto'
                     calidadesDisponibles.sort((a, b) => b - a);
+                    
+                    // Buscar si existe 720p, si no, agarrar la calidad HD más cercana disponible
+                    let calidadObjetivo = calidadesDisponibles.includes(720) ? 720 : calidadesDisponibles[0];
+                    
+                    // Añadir la opción 'Auto' al menú de la tuerca por si quieren cambiarla después
                     calidadesDisponibles.unshift(0); 
                     
-                    // Forzar a Plyr a renderizar el menú de calidad
                     player.config.quality = {
-                        default: 0,
+                        default: calidadObjetivo, // Forzar la carga inicial en 720p o HD alta
                         options: calidadesDisponibles,
                         forced: true,
                         onChange: (q) => {
                             if (q === 0) {
-                                hls.currentLevel = -1; // Auto
+                                hls.currentLevel = -1;
                             } else {
                                 hls.levels.forEach((level, index) => {
                                     if (level.height === q) hls.currentLevel = index;
@@ -174,9 +170,16 @@
                             }
                         }
                     };
+
+                    // Aplicar el cambio de resolución forzado inmediatamente al flujo HLS
+                    if (calidadObjetivo !== 0) {
+                        hls.levels.forEach((level, index) => {
+                            if (level.height === calidadObjetivo) hls.currentLevel = index;
+                        });
+                    }
                     
-                    // Actualizar la interfaz del menú de Plyr manualmente
-                    player.setCamera = player.setCamera; 
+                    // Forzar encendido manual de subtítulos tras conectar el flujo
+                    setTimeout(() => { player.toggleCaptions(true); }, 600);
                 });
             } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
                 videoElement.src = streamUrl;
