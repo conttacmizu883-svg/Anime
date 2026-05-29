@@ -1,15 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chibimaris: Anime Onl - Panel de Control</title>
-    
-    <!-- Estilos de Plyr (Para la vista previa del reproductor) -->
+    <title>Chibimaris: Anime Onl - Panel</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
-    
     <style>
-        /* --- COLORES OFICIALES ESTILO CRUNCHYROLL --- */
         :root {
             --orange-crunchy: #f47521;
             --orange-hover: #ff8a3d;
@@ -17,312 +13,116 @@
             --bg-card: #23252b;
             --text-main: #f8fafc;
             --text-muted: #a1a1aa;
-            
-            --plyr-color-main: #f47521;
-            --plyr-video-background: #000000;
-            --plyr-menu-background: #23252b;
-            --plyr-menu-color: #ffffff;
         }
-
-
-        html, body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-
-        /* --- MODO GENERADOR (PANEL PRINCIPAL) --- */
-        .panel-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-            box-sizing: border-box;
-        }
-        .card {
-            width: 100%;
-            max-width: 750px;
-            background-color: var(--bg-card);
-            padding: 30px;
-            border-radius: 4px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid #2d2e33;
-        }
-        h1 { 
-            color: var(--orange-crunchy); 
-            margin-top: 0; 
-            text-transform: uppercase; 
-            font-size: 26px;
-            letter-spacing: 0.5px;
-        }
+        html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; }
+        .panel-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+        .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; }
         h1 span { color: #fff; }
-        
-        textarea {
-            width: 100%; 
-            height: 160px; 
-            background-color: var(--bg-dark);
-            color: #fff; 
-            border: 1px solid #3a3b40; 
-            border-radius: 4px;
-            padding: 12px; 
-            box-sizing: border-box; 
-            font-family: monospace; 
-            resize: vertical;
-        }
-        textarea:focus { outline: none; border-color: var(--orange-crunchy); }
-        
-        button {
-            width: 100%; 
-            background-color: var(--orange-crunchy); 
-            color: #fff;
-            border: none; 
-            padding: 14px; 
-            font-size: 16px; 
-            font-weight: bold;
-            text-transform: uppercase; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            margin-top: 15px;
-            transition: background 0.2s;
-        }
+        textarea { width: 100%; height: 150px; background-color: var(--bg-dark); color: #fff; border: 1px solid #3a3b40; border-radius: 4px; padding: 12px; box-sizing: border-box; font-family: monospace; }
+        button { width: 100%; background-color: var(--orange-crunchy); color: #fff; border: none; padding: 14px; font-size: 16px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; margin-top: 15px; }
         button:hover { background-color: var(--orange-hover); }
-        
-        .result-box {
-            margin-top: 25px; 
-            background: var(--bg-dark); 
-            padding: 20px;
-            border-left: 4px solid var(--orange-crunchy); 
-            border-radius: 2px; 
-            display: none;
-        }
-        .output-title {
-            font-size: 14px; 
-            color: #fff; 
-            font-weight: bold; 
-            display: block; 
-            margin-top: 15px;
-        }
-        .output-title:first-child { margin-top: 0; }
-        
-        .output-link {
-            background: #1e2026; 
-            padding: 12px; 
-            border: 1px solid #333;
-            color: var(--orange-crunchy); 
-            font-size: 13px; 
-            word-break: break-all;
-            margin-top: 5px; 
-            border-radius: 4px; 
-            user-select: all;
-            font-family: monospace;
-        }
-
-
-        /* --- MODO REPRODUCTOR INDEPENDIENTE (PANTALLA COMPLETA) --- */
-        .player-mode {
-            width: 100%; 
-            height: 100%; 
-            display: none; 
-            background: #000;
-        }
+        .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
+        .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
+        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--orange-crunchy); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; user-select: all; font-family: monospace; }
+        .player-mode { width: 100%; height: 100%; display: none; background: #000; }
         .player-mode video { width: 100%; height: 100%; }
-        
-        .plyr__captions .plyr__caption {
-            background: rgba(0, 0, 0, 0.8) !important;
-            color: #ffffff !important;
-            font-size: 20px !important;
-            font-weight: 600;
-        }
+        .plyr__captions .plyr__caption { background: rgba(0, 0, 0, 0.8) !important; color: #ffffff !important; font-size: 20px !important; font-weight: 600; }
     </style>
 </head>
 <body>
 
-
-<!-- MODO 1: EL PANEL GENERADOR -->
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Anime Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; margin-bottom:20px; font-size:14px;">
-            Sube el bloque de texto con calidades y subtítulos para empaquetarlo en un solo enlace limpio.
-        </p>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador de enlaces cortos optimizados.</p>
+        <textarea id="rawInput" placeholder="Pega el bloque completo de la película o episodio aquí..."></textarea>
+        <button onclick="procesarCorto()">Generar Enlace Corto</button>
         
-        <textarea id="rawInput" placeholder="=== EPISODIO 1 ===&#10;🎬 VIDEOS:&#10;[720P] https://...&#10;&#10;📝 SUBTÍTULOS:&#10;[Español] https://..."></textarea>
-        <button onclick="generarEnlacesDistribucion()">Procesar Enlaces</button>
-        
-        <!-- Zona de resultados con los enlaces listos -->
         <div id="resultArea" class="result-box">
-            <span class="output-title">📱 Enlace de Video Directo (Para tu App Chibimaris o Web):</span>
+            <span class="output-title">📱 Enlace Corto para tu App Chibimaris:</span>
             <div id="linkOutput" class="output-link"></div>
-            
-            <span class="output-title">🌐 Código de Inserción (Iframe Embed sin publicidad):</span>
-            <div id="iframeOutput" class="output-link"></div>
         </div>
     </div>
 </div>
 
-
-<!-- MODO 2: EL REPRODUCTOR AUTOMÁTICO (LO QUE ABRE TU APP O WEB) -->
 <div id="viewReproductor" class="player-mode">
     <video id="player" controls crossorigin playsinline></video>
 </div>
 
-
-<!-- Scripts de procesamiento HLS y Plyr -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
-
 <script>
-    let playerInstance = null;
-    let hlsInstance = null;
-    let calidadesDisponibles = {};
+    // --- PROCESAR ENLACE CORTO ---
+    function procesarCorto() {
+        const texto = document.getElementById('rawInput').value.trim();
+        if(!texto) return alert("Pega el texto primero.");
 
-
-    // --- ACCIÓN: PROCESAR EL BLOQUE DE TEXTO ---
-    function generarEnlacesDistribucion() {
-        const textoOriginal = document.getElementById('rawInput').value.trim();
-        if(!textoOriginal) { alert("Por favor, pega el bloque de texto primero."); return; }
-
-
-        // Encriptamos todo el contenido en un formato seguro Base64 para pasarlo por la URL sin perder datos
-        const dataEncriptada = btoa(unescape(encodeURIComponent(textoOriginal)));
+        // Extraer el primer video 720p disponible
+        const regexVideo = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
+        const matchV = regexVideo.exec(texto);
         
-        // Construimos la URL final apuntando a este mismo archivo online
+        // Extraer los subtítulos en Español
+        const regexSubs = /\[Español\]\s*(https?:\/\/[^\s"']+\.srt[^\s"']*)/i;
+        const matchS = regexSubs.exec(texto);
+
+        if(!matchV) return alert("No se encontró ningún video en calidad [720P].");
+
+        let videoUrl = matchV[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&');
+        let subsUrl = matchS ? matchS[1] : '';
+
+        // Construir URL corta limpia
         const urlBase = window.location.href.split('?')[0];
-        const urlFinal = `${urlBase}?stream=${dataEncriptada}`;
-        
-        // Generamos el iframe por si quieres incrustarlo directamente en otra web
-        const codigoIframe = `<iframe src="${urlFinal}" width="100%" height="100%" frameborder="0" allowfullscreen></iframe>`;
+        const urlFinal = `${urlBase}?video=${encodeURIComponent(videoUrl)}&subs=${encodeURIComponent(subsUrl)}`;
 
-
-        // Colocamos los resultados en pantalla
         document.getElementById('linkOutput').innerText = urlFinal;
-        document.getElementById('iframeOutput').innerText = codigoIframe;
         document.getElementById('resultArea').style.display = 'block';
     }
 
-
-
-
-    // --- ACCIÓN: DETECTAR SI ES UN ENLACE GENERADO ---
+    // --- MODO REPRODUCTOR AUTOMÁTICO ---
     window.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
-        const streamData = urlParams.get('stream');
+        const videoParam = urlParams.get('video');
+        const subsParam = urlParams.get('subs');
 
-
-        // Si la URL contiene el parámetro "?stream=", ocultamos el panel y abrimos el reproductor directo
-        if (streamData) {
+        if (videoParam) {
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
             
-            try {
-                // Descompone la información del enlace para extraer los videos y subtítulos originales
-                const textoDescomprimido = decodeURIComponent(escape(atob(streamData)));
-                await configurarStreaming(textoDescomprimido);
-            } catch(e) {
-                document.body.innerHTML = "<h2 style='color:#f47521; text-align:center; margin-top:20%;'>Error al decodificar los flujos de streaming. Asegúrate de copiar el enlace completo.</h2>";
+            const videoElement = document.getElementById('player');
+            
+            // Añadir subtítulos en español si existen
+            if(subsParam) {
+                let track = document.createElement('track');
+                track.kind = 'captions';
+                track.label = 'Español';
+                track.srclang = 'es';
+                track.default = true;
+                track.src = await corregirSrtAVtt(decodeURIComponent(subsParam));
+                videoElement.appendChild(track);
+            }
+
+            // Inicializar Plyr con color Crunchyroll
+            let player = new Plyr('#player', {
+                captions: { active: true, update: true, language: 'es' },
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'fullscreen']
+            });
+
+            // Cargar Streaming HLS (.m3u8)
+            let streamUrl = decodeURIComponent(videoParam);
+            if (Hls.isSupported()) {
+                let hls = new Hls();
+                hls.loadSource(streamUrl);
+                hls.attachMedia(videoElement);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => player.play());
+            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                videoElement.src = streamUrl;
+                videoElement.addEventListener('loadedmetadata', () => player.play());
             }
         }
     });
 
-
-    // Configuración interna del reproductor usando el texto descodificado
-    async function configurarStreaming(text) {
-        calidadesDisponibles = {};
-        let listaCalidades = [];
-
-
-        // 1. Clasificar y limpiar enlaces de video por resolución
-        const regexVideo = /\[(\d+)P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/g;
-        let matchV;
-        while ((matchV = regexVideo.exec(text)) !== null) {
-            let cal = parseInt(matchV[1]);
-            let urlLimpia = matchV[2].replace(/&amp;/g, '&').replace(/\\u0026/g, '&');
-            if (!calidadesDisponibles[cal]) {
-                calidadesDisponibles[cal] = urlLimpia;
-                listaCalidades.push(cal);
-            }
-        }
-
-
-        if(listaCalidades.length === 0) {
-            alert("No se detectaron flujos de video .m3u8 compatibles.");
-            return;
-        }
-        
-        // Ordenamos las calidades de mayor a menor (720p -> 540p -> 360p)
-        listaCalidades.sort((a,b) => b-a);
-
-
-        // 2. Extraer y corregir los subtítulos SRT
-        const videoElement = document.getElementById('player');
-        const regexSubs = /\[(.*?)\]\s*(https?:\/\/[^\s"']+\.srt[^\s"']*)/g;
-        let matchS;
-
-
-        while ((matchS = regexSubs.exec(text)) !== null) {
-            let idioma = matchS[1];
-            let urlSub = matchS[2];
-            let track = document.createElement('track');
-            track.kind = 'captions';
-            track.label = idioma;
-            
-            // Asignación de idioma estándar
-            if(idioma.toLowerCase().includes('español')) track.srclang = 'es';
-            else if(idioma.toLowerCase().includes('english')) track.srclang = 'en';
-            else track.srclang = idioma.substring(0, 2).toLowerCase();
-            
-            if(idioma.toLowerCase().includes('español')) track.default = true;
-            
-            // Pasamos el SRT por el conversor automático a VTT
-            track.src = await corregirSrtAVtt(urlSub);
-            videoElement.appendChild(track);
-        }
-
-
-        // 3. Inicializar el reproductor Plyr con estilo Crunchyroll
-        playerInstance = new Plyr('#player', {
-            captions: { active: true, update: true, language: 'es' },
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'fullscreen'],
-            quality: {
-                default: listaCalidades[0],
-                options: listaCalidades,
-                forced: true,
-                onChange: (q) => {
-                    const tiempoActual = playerInstance.currentTime;
-                    const corriendo = playerInstance.playing;
-                    if(hlsInstance) {
-                        hlsInstance.loadSource(calidadesDisponibles[q]);
-                        hlsInstance.attachMedia(videoElement);
-                        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { 
-                            videoElement.currentTime = tiempoActual; 
-                            if(corriendo) playerInstance.play(); 
-                        });
-                    }
-                }
-            }
-        });
-
-
-        // 4. Iniciar la reproducción del stream HLS
-        if (Hls.isSupported()) {
-            hlsInstance = new Hls();
-            hlsInstance.loadSource(calidadesDisponibles[listaCalidades[0]]);
-            hlsInstance.attachMedia(videoElement);
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => playerInstance.play());
-        } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-            videoElement.src = calidadesDisponibles[listaCalidades[0]];
-            videoElement.addEventListener('loadedmetadata', () => playerInstance.play());
-        }
-    }
-
-
-    // Parsea y repara SRT para hacerlo compatible con navegadores web modernos (.vtt)
     async function corregirSrtAVtt(url) {
         try {
             const r = await fetch(url);
@@ -332,7 +132,5 @@
         } catch(e) { return url; }
     }
 </script>
-
-
 </body>
 </html>
