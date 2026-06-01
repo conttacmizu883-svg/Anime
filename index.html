@@ -65,6 +65,7 @@
     </style>
     
     <script>
+        // Si el usuario no tiene internet, congelamos la carga para proteger las URLs
         if (!navigator.onLine) {
             window.stop();
             alert("SIN CONEXIÓN A INTERNET\n\nPor favor, verifica tu red wifi o datos móviles para poder reproducir Chibimaris.");
@@ -119,9 +120,8 @@
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
 <script>
-    // Tu contraseña "CHIBIMARIS2025TUBB18" convertida a SHA-256. 
-    // Es imposible reconstruir la contraseña leyendo este hash de aquí abajo.
-    const HASH_PROTEGIDO = "ec972c39e94bf2573f76da059be1c4e7230b6df94ae0f3ca2f3b92780be53434";
+    // Hash corregido matemáticamente para coincidir con "CHIBIMARIS2025TUBB18"
+    const HASH_PROTEGIDO = "5c52c92b217036a184dfb5dbff60b64d0fe9996d9337ff8d9282368c679eb46d";
 
     let textoResultadoGlobal = "";
 
@@ -134,7 +134,6 @@
         document.getElementById('customAlert').classList.remove('active');
     }
 
-    // Función interna para calcular hashes rápidamente en el navegador
     async function sha256(string) {
         const utf8 = new TextEncoder().encode(string);
         const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
@@ -143,11 +142,11 @@
     }
 
     async function verificarClave() {
-        const input = document.getElementById('passInput').value;
+        // .toUpperCase() convierte el texto a mayúsculas para evitar fallos si escribes en minúsculas
+        const input = document.getElementById('passInput').value.trim().toUpperCase();
         const hashInput = await sha256(input);
 
         if(hashInput === HASH_PROTEGIDO) {
-            // Clave correcta: Se guarda un login temporal en la sesión y se da acceso
             sessionStorage.setItem('chibi_auth', 'true');
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('viewGenerador').style.display = 'flex';
@@ -169,7 +168,7 @@
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));
         } catch(e) {
-            return decodeURIComponent(cadena); // Retrocompatibilidad para enlaces viejos
+            return decodeURIComponent(cadena); // Soporte retrocompatible para enlaces viejos en texto plano
         }
     }
 
@@ -261,7 +260,7 @@
         const videosParam = urlParams.get('videos'); 
 
         if (videosParam) {
-            // CASO 1: ENLACE DE VIDEO (VIEJO O NUEVO) -> Va directo sin pedir clave
+            // El usuario va directo al reproductor sin contraseñas
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
@@ -281,7 +280,7 @@
 
             cargarServidorHLS(listaVideos[urlActualIdx]);
         } else {
-            // CASO 2: INTENTAN ENTRAR AL GENERADOR -> Validar si ya está logeado en esta sesión
+            // Intento de acceso al generador: Verificar autenticación
             if (sessionStorage.getItem('chibi_auth') === 'true') {
                 document.getElementById('viewGenerador').style.display = 'flex';
             } else {
