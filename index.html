@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chibimaris: Doramas Onl</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
     <style>
         :root {
             --orange-crunchy: #f47521;
@@ -13,11 +12,6 @@
             --bg-card: #23252b;
             --text-main: #f8fafc;
             --text-muted: #a1a1aa;
-            
-            --plyr-color-main: #f47521;
-            --plyr-video-background: #000000;
-            --plyr-menu-background: #23252b;
-            --plyr-menu-color: #ffffff;
         }
         html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         
@@ -37,23 +31,21 @@
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
         
-        /* ESTILOS DE LA PANTALLA DE BLOQUEO INTERNA */
+        /* PANTALLA DE BLOQUEO */
         .login-screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-dark); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
         .login-card { width: 100%; max-width: 400px; background: var(--bg-card); padding: 35px 25px; border-radius: 6px; border: 1px solid #2d2e33; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
         .login-card input[type="password"] { width: 100%; background: var(--bg-dark); border: 1px solid #3a3b40; color: #fff; padding: 14px; font-size: 16px; border-radius: 4px; box-sizing: border-box; text-align: center; margin-top: 15px; outline: none; transition: border 0.2s; }
         .login-card input[type="password"]:focus { border-color: var(--orange-crunchy); }
 
-        .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
-        .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
-        video { width: 100%; height: 100%; object-fit: contain; display: block; }
+        /* NUEVO REPRODUCTOR MULTI-SERVIDOR (ANTI-ANUNCIOS) */
+        .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; flex-direction: column; }
+        .server-tabs { display: flex; background: #1a1b20; overflow-x: auto; border-bottom: 2px solid #2d2e33; padding: 5px 10px; gap: 8px; }
+        .server-btn { background: #2a2c34; color: #fff; border: 1px solid #3d404a; padding: 8px 16px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .server-btn.active { background: var(--orange-crunchy); border-color: var(--orange-crunchy); }
         
-        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 21, 25, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.3s; opacity: 0; }
-        .spinner { width: 55px; height: 55px; border: 5px solid rgba(244, 117, 33, 0.15); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 0.9s linear infinite; }
-        .loading-text { color: #fff; margin-top: 15px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; text-align: center; padding: 0 10px; }
+        .video-wrapper { flex: 1; width: 100%; height: 100%; position: relative; background: #000; }
+        iframe { width: 100%; height: 100%; border: none; display: block; }
         
-        @keyframes girar { to { transform: rotate(360deg); } }
-        .is-loading .loading-overlay { opacity: 1; }
-
         .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 999999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
         .custom-alert-box { background: var(--bg-card); border: 2px solid var(--orange-crunchy); border-radius: 8px; width: 88%; max-width: 380px; padding: 25px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.8); transform: scale(0.85); transition: transform 0.2s ease; }
@@ -73,7 +65,6 @@
 </head>
 <body>
 
-<!-- COMPONENTE DE LOGEADO INTEGRADO -->
 <div id="loginScreen" class="login-screen">
     <div class="login-card">
         <h1 style="font-size: 22px;">Panel <span>Privado</span></h1>
@@ -86,8 +77,8 @@
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador Masivo Protegido (Compatibilidad Total Activa).</p>
-        <textarea id="rawInput" placeholder="Pega aquí todos los episodios juntos...&#10;&#10;Ejemplo:&#10;=== EPISODIO 1 ===&#10;[720P] https://..."></textarea>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador Masivo Protegido (Filtro Inteligente de Servidores Activo).</p>
+        <textarea id="rawInput" placeholder="Pega aquí todos los episodios juntos...&#10;&#10;Ejemplo:&#10;=== EPISODIO 1 ===&#10;[Voe]&#10;https://voe.sx/..."></textarea>
         <button onclick="procesarMasivo()">Generar Lista Encriptada Protegida</button>
         
         <div id="resultArea" class="result-box">
@@ -99,12 +90,14 @@
 </div>
 
 <div id="viewReproductor" class="player-mode">
-    <div id="videoContainer" class="video-wrapper">
-        <div class="loading-overlay">
-            <div class="spinner"></div>
-            <div id="loadingMessage" class="loading-text">Cargando Video Seguro...</div>
+    <div id="serverTabs" class="server-tabs">
         </div>
-        <video id="player" crossorigin="anonymous" playsinline webkit-playsinline></video>
+    <div class="video-wrapper">
+        <iframe id="protectedPlayer" 
+                allowfullscreen 
+                scrolling="no" 
+                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation">
+        </iframe>
     </div>
 </div>
 
@@ -116,13 +109,8 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
-
 <script>
-    // Firma criptográfica SHA-256 exacta de "CHIBIMARIS2025TUBB18"
     const HASH_PROTEGIDO = "5c52c92b217036a184dfb5dbff60b64d0fe9996d9337ff8d9282368c679eb46d";
-
     let textoResultadoGlobal = "";
 
     function chibimarisAviso(mensaje) {
@@ -171,7 +159,7 @@
         }
     }
 
-    // EXTRACTOR MEJORADO MULTI-ENLACE CON FILTRADO AUTOMÁTICO
+    // EXTRACTOR MODIFICADO: Ignora descargas y extrae nombres de servidor + URLs web
     function procesarMasivo() {
         if(sessionStorage.getItem('chibi_auth') !== 'true') return;
         
@@ -198,27 +186,28 @@
             const numeroEp = matchNumero ? matchNumero[0] : "1";
             let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
 
-            // Expresión regular global para capturar todas las URLs m3u8 dentro de este bloque de capitulo
-            const regexGlobalM3u8 = /(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/gi;
-            let urlsEncontradas = [];
+            // Cortamos el bloque para ignorar todo lo que esté después de "DESCARGAS"
+            let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
+
+            // Regex adaptada para capturar el nombre del servidor [Nombre] y su correspondiente URL https://
+            const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
+            let servidoresEncontrados = [];
             let match;
 
-            while ((match = regexGlobalM3u8.exec(contenidoEpisodio)) !== null) {
-                let urlLimpia = match[1]
-                    .replace(/&amp;/g, '&')
-                    .replace(/\\u0026/g, '&')
-                    .replace(/\\/g, ''); // Limpieza total de escapes innecesarios
-                
-                // Evita duplicar exactamente el mismo enlace de respaldo en el arreglo
-                if (!urlsEncontradas.includes(urlLimpia)) {
-                    urlsEncontradas.push(urlLimpia);
+            while ((match = regexServidores.exec(seccionStreaming)) !== null) {
+                let nombreServidor = match[1].trim();
+                let urlServidor = match[2].trim();
+
+                // Filtrar para evitar que entren imanes u otras cosas raras si se colaron
+                if (urlServidor.startsWith("http")) {
+                    servidoresEncontrados.push(`${nombreServidor}|${urlServidor}`);
                 }
             }
 
-            if (urlsEncontradas.length > 0) {
-                let stringUrls = urlsEncontradas.join(',');
-                let urlsProtegidas = encriptarDatos(stringUrls);
-                let urlFinal = `${urlBase}?videos=${urlsProtegidas}`;
+            if (servidoresEncontrados.length > 0) {
+                let stringData = servidoresEncontrados.join(',');
+                let dataProtegida = encriptarDatos(stringData);
+                let urlFinal = `${urlBase}?videos=${dataProtegida}`;
 
                 resultadosTexto.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
                 resultadosHTML.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`);
@@ -226,7 +215,7 @@
         }
 
         if(resultadosTexto.length === 0) {
-            return chibimarisAviso("❌ No se encontraron enlaces .m3u8 válidos en el texto provisto.");
+            return chibimarisAviso("❌ No se encontraron enlaces de reproducción válidos antes de la sección de descargas.");
         }
 
         textoResultadoGlobal = resultadosTexto.join("\n\n");
@@ -244,42 +233,31 @@
         });
     }
 
-    let listaVideos = [];
-    let urlActualIdx = 0;
-    let player;
-    let hls;
-    let videoElement;
-    let container;
-    let timeoutsDeCarga;
+    // LOGICA DEL REPRODUCTOR MULTI-SERVIDOR CON BLOQUEO DE PUBLICIDAD
+    let servidoresLista = [];
 
-    window.addEventListener('DOMContentLoaded', async () => {
-        if (!navigator.onLine) {
-            document.body.innerHTML = "<div style='display:flex; justify-content:center; align-items:center; height:100vh; color:#fff; font-weight:bold; background:#141519; text-align:center; padding:20px;'>⚠️ SIN CONEXIÓN A INTERNET<br><br>Por favor reconéctate para continuar viendo.</div>";
-            return;
-        }
-
+    window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const videosParam = urlParams.get('videos'); 
 
         if (videosParam) {
             document.getElementById('viewGenerador').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('viewReproductor').style.display = 'block';
+            document.getElementById('viewReproductor').style.display = 'flex';
             
-            videoElement = document.getElementById('player');
-            container = document.getElementById('videoContainer');
+            let dataDesencriptada = desencriptarDatos(videosParam);
+            // Formato recuperado: ["Servidor1|Url1", "Servidor2|Url2"]
+            let pares = dataDesencriptada.split(',');
             
-            let videosDesencriptados = desencriptarDatos(videosParam);
-            listaVideos = videosDesencriptados.split(',');
-            urlActualIdx = 0;
+            servidoresLista = pares.map(p => {
+                let partes = p.split('|');
+                return { nombre: partes[0], url: partes[1] };
+            });
 
-            container.classList.add('is-loading');
-            
-            videoElement.addEventListener('waiting', () => { container.classList.add('is-loading'); activarTemporizadorFallo(); });
-            videoElement.addEventListener('playing', () => { container.classList.remove('is-loading'); clearTimeout(timeoutsDeCarga); });
-            videoElement.addEventListener('canplay', () => { container.classList.remove('is-loading'); clearTimeout(timeoutsDeCarga); });
-
-            cargarServidorHLS(listaVideos[urlActualIdx]);
+            generarPestañasServidores();
+            if (servidoresLista.length > 0) {
+                cambiarServidor(0);
+            }
         } else {
             if (sessionStorage.getItem('chibi_auth') === 'true') {
                 document.getElementById('viewGenerador').style.display = 'flex';
@@ -289,118 +267,33 @@
         }
     });
 
-    function cargarServidorHLS(streamUrl) {
-        document.getElementById('loadingMessage').innerText = `Conectando... (Servidor ${urlActualIdx + 1}/${listaVideos.length})`;
+    function generarPestañasServidores() {
+        const contenedorTabs = document.getElementById('serverTabs');
+        contenedorTabs.innerHTML = "";
+
+        servidoresLista.forEach((servidor, index) => {
+            const boton = document.createElement('button');
+            boton.className = 'server-btn';
+            boton.id = `btn-server-${index}`;
+            boton.innerText = servidor.nombre;
+            boton.onclick = () => cambiarServidor(index);
+            contenedorTabs.appendChild(boton);
+        });
+    }
+
+    function cambiarServidor(index) {
+        // Desmarcar todos los botones
+        document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
         
-        const defaultOptions = {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
-            settings: ['quality']
-        };
+        // Marcar boton activo
+        const botonActivo = document.getElementById(`btn-server-${index}`);
+        if (botonActivo) botonActivo.classList.add('active');
 
-        if (hls) { hls.destroy(); }
-
-        if (Hls.isSupported()) {
-            // MEDIDA ANTI-ANUNCIOS Y ERRORES: Configuración robusta de reintentos e inmunidad a frames de terceros
-            hls = new Hls({ 
-                maxBufferLength: 20, 
-                maxMaxBufferLength: 300, 
-                manifestLoadingMaxRetry: 2, 
-                levelLoadingMaxRetry: 2,
-                xhrSetup: function (xhr, url) {
-                    xhr.withCredentials = false; // Evita el rastreo de cookies de anuncios de terceros
-                }
-            });
-            hls.loadSource(streamUrl);
-            hls.attachMedia(videoElement);
-
-            hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                const availableQualities = data.levels.map(l => l.height).filter(h => h > 0);
-                availableQualities.sort((a, b) => b - a);
-                
-                let defaultQuality = availableQualities.includes(720) ? 720 : (availableQualities.includes(540) ? 540 : availableQualities[0]);
-                const qualityOptions = [0, ...availableQualities];
-                
-                const options = {
-                    ...defaultOptions,
-                    quality: {
-                        default: defaultQuality,
-                        options: qualityOptions,
-                        forced: true,
-                        onChange: (q) => {
-                            if (q === 0) hls.currentLevel = -1;
-                            else {
-                                hls.levels.forEach((lvl, idx) => {
-                                    if (lvl.height === q) hls.currentLevel = idx;
-                                });
-                            }
-                        }
-                    }
-                };
-
-                if (!player) {
-                    player = new Plyr('#player', options);
-                    configurarEventosPlayer();
-                }
-
-                if (defaultQuality !== 0) {
-                    hls.levels.forEach((lvl, idx) => {
-                        if (lvl.height === defaultQuality) hls.currentLevel = idx;
-                    });
-                }
-                
-                videoElement.play().catch(() => {});
-            });
-
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) intentarSiguienteServidor();
-            });
-
-            activarTemporizadorFallo();
-
-        } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-            videoElement.src = streamUrl;
-            if(!player) {
-                player = new Plyr('#player', defaultOptions);
-                configurarEventosPlayer();
-            }
-            videoElement.play().catch(() => {});
+        // Cargar URL en el Iframe con protección Sandbox estricta
+        const iframe = document.getElementById('protectedPlayer');
+        if (servidoresLista[index]) {
+            iframe.src = servidoresLista[index].url;
         }
-    }
-
-    function activarTemporizadorFallo() {
-        clearTimeout(timeoutsDeCarga);
-        timeoutsDeCarga = setTimeout(() => {
-            if (videoElement.paused && container.classList.contains('is-loading')) {
-                intentarSiguienteServidor();
-            }
-        }, 7000);
-    }
-
-    function intentarSiguienteServidor() {
-        clearTimeout(timeoutsDeCarga);
-        urlActualIdx++;
-        if (urlActualIdx < listaVideos.length) {
-            container.classList.add('is-loading');
-            document.getElementById('loadingMessage').innerText = `Cambiando al Servidor de Respaldo ${urlActualIdx + 1}...`;
-            cargarServidorHLS(listaVideos[urlActualIdx]);
-        } else {
-            document.getElementById('loadingMessage').innerText = "❌ Enlaces no disponibles.";
-            chibimarisAviso("Lo sentimos, parece que los servidores no responden o el enlace ha caducado.");
-        }
-    }
-
-    function configurarEventosPlayer() {
-        player.on('enterfullscreen', () => {
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('landscape').catch(() => {});
-            }
-        });
-
-        player.on('exitfullscreen', () => {
-            if (screen.orientation && screen.orientation.unlock) {
-                screen.orientation.unlock();
-            }
-        });
     }
 </script>
 </body>
