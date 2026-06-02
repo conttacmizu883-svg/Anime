@@ -30,14 +30,8 @@
 
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
-        
-        /* PANTALLA DE BLOQUEO */
-        .login-screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-dark); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        .login-card { width: 100%; max-width: 400px; background: var(--bg-card); padding: 35px 25px; border-radius: 6px; border: 1px solid #2d2e33; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
-        .login-card input[type="password"] { width: 100%; background: var(--bg-dark); border: 1px solid #3a3b40; color: #fff; padding: 14px; font-size: 16px; border-radius: 4px; box-sizing: border-box; text-align: center; margin-top: 15px; outline: none; transition: border 0.2s; }
-        .login-card input[type="password"]:focus { border-color: var(--orange-crunchy); }
 
-        /* NUEVO REPRODUCTOR MULTI-SERVIDOR (ANTI-ANUNCIOS) */
+        /* REPRODUCTOR MULTI-SERVIDOR (ANTI-ANUNCIOS) */
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; flex-direction: column; }
         .server-tabs { display: flex; background: #1a1b20; overflow-x: auto; border-bottom: 2px solid #2d2e33; padding: 5px 10px; gap: 8px; }
         .server-btn { background: #2a2c34; color: #fff; border: 1px solid #3d404a; padding: 8px 16px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
@@ -65,19 +59,10 @@
 </head>
 <body>
 
-<div id="loginScreen" class="login-screen">
-    <div class="login-card">
-        <h1 style="font-size: 22px;">Panel <span>Privado</span></h1>
-        <p style="color: var(--text-muted); font-size: 13px; margin-top: -5px;">Introduce la clave maestra para administrar episodios.</p>
-        <input type="password" id="passInput" placeholder="•••••••••••••••••" onkeydown="if(event.key === 'Enter') verificarClave()">
-        <button onclick="verificarClave()">Ingresar al Panel</button>
-    </div>
-</div>
-
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador Masivo Protegido (Filtro Inteligente de Servidores Activo).</p>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador Masivo Público (Filtro Inteligente de Servidores Activo).</p>
         <textarea id="rawInput" placeholder="Pega aquí todos los episodios juntos...&#10;&#10;Ejemplo:&#10;=== EPISODIO 1 ===&#10;[Voe]&#10;https://voe.sx/..."></textarea>
         <button onclick="procesarMasivo()">Generar Lista Encriptada Protegida</button>
         
@@ -110,7 +95,6 @@
 </div>
 
 <script>
-    const HASH_PROTEGIDO = "5c52c92b217036a184dfb5dbff60b64d0fe9996d9337ff8d9282368c679eb46d";
     let textoResultadoGlobal = "";
 
     function chibimarisAviso(mensaje) {
@@ -120,27 +104,6 @@
 
     function cerrarAlerta() {
         document.getElementById('customAlert').classList.remove('active');
-    }
-
-    async function sha256(string) {
-        const utf8 = new TextEncoder().encode(string);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function verificarClave() {
-        const input = document.getElementById('passInput').value.trim().toUpperCase();
-        const hashInput = await sha256(input);
-
-        if(hashInput === HASH_PROTEGIDO) {
-            sessionStorage.setItem('chibi_auth', 'true');
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('viewGenerador').style.display = 'flex';
-        } else {
-            alert("❌ Contraseña Incorrecta. Acceso Denegado.");
-            document.getElementById('passInput').value = "";
-        }
     }
 
     function encriptarDatos(cadena) {
@@ -159,10 +122,7 @@
         }
     }
 
-    // EXTRACTOR MODIFICADO: Ignora descargas y extrae nombres de servidor + URLs web
     function procesarMasivo() {
-        if(sessionStorage.getItem('chibi_auth') !== 'true') return;
-        
         const textoCompleto = document.getElementById('rawInput').value.trim();
         if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los episodios.");
 
@@ -189,7 +149,6 @@
             // Cortamos el bloque para ignorar todo lo que esté después de "DESCARGAS"
             let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
 
-            // Regex adaptada para capturar el nombre del servidor [Nombre] y su correspondiente URL https://
             const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
             let servidoresEncontrados = [];
             let match;
@@ -198,7 +157,6 @@
                 let nombreServidor = match[1].trim();
                 let urlServidor = match[2].trim();
 
-                // Filtrar para evitar que entren imanes u otras cosas raras si se colaron
                 if (urlServidor.startsWith("http")) {
                     servidoresEncontrados.push(`${nombreServidor}|${urlServidor}`);
                 }
@@ -233,7 +191,6 @@
         });
     }
 
-    // LOGICA DEL REPRODUCTOR MULTI-SERVIDOR CON BLOQUEO DE PUBLICIDAD
     let servidoresLista = [];
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -242,11 +199,9 @@
 
         if (videosParam) {
             document.getElementById('viewGenerador').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'flex';
             
             let dataDesencriptada = desencriptarDatos(videosParam);
-            // Formato recuperado: ["Servidor1|Url1", "Servidor2|Url2"]
             let pares = dataDesencriptada.split(',');
             
             servidoresLista = pares.map(p => {
@@ -259,11 +214,8 @@
                 cambiarServidor(0);
             }
         } else {
-            if (sessionStorage.getItem('chibi_auth') === 'true') {
-                document.getElementById('viewGenerador').style.display = 'flex';
-            } else {
-                document.getElementById('loginScreen').style.display = 'flex';
-            }
+            // El generador ahora se muestra de inmediato sin condiciones de login
+            document.getElementById('viewGenerador').style.display = 'flex';
         }
     });
 
@@ -282,14 +234,11 @@
     }
 
     function cambiarServidor(index) {
-        // Desmarcar todos los botones
         document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
         
-        // Marcar boton activo
         const botonActivo = document.getElementById(`btn-server-${index}`);
         if (botonActivo) botonActivo.classList.add('active');
 
-        // Cargar URL en el Iframe con protección Sandbox estricta
         const iframe = document.getElementById('protectedPlayer');
         if (servidoresLista[index]) {
             iframe.src = servidoresLista[index].url;
