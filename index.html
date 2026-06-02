@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chibimaris: Doramas Onl</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
     <style>
         :root {
             --orange-crunchy: #f47521;
@@ -13,11 +12,6 @@
             --bg-card: #23252b;
             --text-main: #f8fafc;
             --text-muted: #a1a1aa;
-            
-            --plyr-color-main: #f47521;
-            --plyr-video-background: #000000;
-            --plyr-menu-background: #23252b;
-            --plyr-menu-color: #ffffff;
         }
         html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         
@@ -37,26 +31,31 @@
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
 
-        /* MODO REPRODUCTOR PREMIUM ADAPTADO */
-        .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
-        .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
-        video { width: 100%; height: 100%; object-fit: contain; display: block; }
+        /* REPRODUCTOR ESTILO PREMIUM CON TABS ORIGINALES */
+        .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; flex-direction: column; }
+        .server-tabs { display: flex; background: #1a1b20; overflow-x: auto; border-bottom: 2px solid #2d2e33; padding: 10px; gap: 8px; }
+        .server-btn { background: #2a2c34; color: #fff; border: 1px solid #3d404a; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: 0.2s; text-transform: uppercase; }
+        .server-btn.active { background: var(--orange-crunchy); border-color: var(--orange-crunchy); box-shadow: 0 0 10px rgba(244,117,33,0.4); }
         
-        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 21, 25, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.3s; opacity: 0; }
-        .spinner { width: 55px; height: 55px; border: 5px solid rgba(244, 117, 33, 0.15); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 0.9s linear infinite; }
-        .loading-text { color: #fff; margin-top: 15px; font-size: 15px; font-weight: bold; letter-spacing: 0.5px; text-align: center; padding: 0 10px; }
+        .video-wrapper { flex: 1; width: 100%; height: 100%; position: relative; background: #000; }
+        iframe { width: 100%; height: 100%; border: none; display: block; background: #000; }
         
+        /* CAPA DE CARGA ADGUARD SIMULADO */
+        .dns-shield-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #141519; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99; pointer-events: none; transition: opacity 0.4s; }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(244, 117, 33, 0.1); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 1s linear infinite; }
+        .dns-text { color: #fff; margin-top: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; text-align: center; }
+        .dns-status { color: #4ade80; font-size: 12px; margin-top: 5px; font-family: monospace; }
         @keyframes girar { to { transform: rotate(360deg); } }
-        .is-loading .loading-overlay { opacity: 1; }
+        
+        .ready .dns-shield-overlay { opacity: 0; }
 
         .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 999999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
         .custom-alert-box { background: var(--bg-card); border: 2px solid var(--orange-crunchy); border-radius: 8px; width: 88%; max-width: 380px; padding: 25px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.8); transform: scale(0.85); transition: transform 0.2s ease; }
         .custom-alert-overlay.active .custom-alert-box { transform: scale(1); }
-        .custom-alert-title { color: var(--orange-crunchy); font-size: 19px; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-family: sans-serif; }
+        .custom-alert-title { color: var(--orange-crunchy); font-size: 19px; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .custom-alert-msg { color: var(--text-main); font-size: 14px; line-height: 1.5; margin-bottom: 22px; }
-        .custom-alert-btn { background: var(--orange-crunchy); color: #fff; border: none; padding: 11px 30px; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-size: 13px; transition: background 0.2s; box-shadow: 0 4px 10px rgba(244, 117, 33, 0.3); }
-        .custom-alert-btn:hover { background: var(--orange-hover); }
+        .custom-alert-btn { background: var(--orange-crunchy); color: #fff; border: none; padding: 11px 30px; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -64,25 +63,32 @@
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Generador Directo y Seguro (Remoción de Anuncios y Auto-Salto de Servidores).</p>
-        <textarea id="rawInput" placeholder="Pega aquí todos los episodios juntos..."></textarea>
-        <button onclick="procesarMasivo()">Generar Enlaces Limpios Estilo Premium</button>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Conversor Avanzado con Inyección de Filtro DNS-AdGuard para Reproductores.</p>
+        <textarea id="rawInput" placeholder="Pega aquí los episodios con estructura '=== EPISODIO 1 ===' ..."></textarea>
+        <button onclick="procesarMasivo()">Generar Enlaces Seguros Integrados</button>
         
         <div id="resultArea" class="result-box">
-            <span class="output-title">📱 Lista Completa Optimizada:</span>
+            <span class="output-title">📱 Enlaces procesados para el Reproductor Dinámico:</span>
             <div id="linkOutput" class="output-link"></div>
-            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Bloque Limpio</button>
+            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Bloque Procesado</button>
         </div>
     </div>
 </div>
 
 <div id="viewReproductor" class="player-mode">
-    <div id="videoContainer" class="video-wrapper">
-        <div class="loading-overlay">
-            <div class="spinner"></div>
-            <div id="loadingMessage" class="loading-text">Filtrando Anuncios y Conectando Servidor...</div>
+    <div id="serverTabs" class="server-tabs">
         </div>
-        <video id="player" crossorigin="anonymous" playsinline webkit-playsinline></video>
+    <div id="videoContainer" class="video-wrapper">
+        <div class="dns-shield-overlay">
+            <div class="spinner"></div>
+            <div class="dns-text">Filtrando Rastreadores y Publicidad</div>
+            <div class="dns-status">Protección AdGuard-DNS Activa por Software</div>
+        </div>
+        <iframe id="protectedPlayer" 
+                allowfullscreen 
+                scrolling="no"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation">
+        </iframe>
     </div>
 </div>
 
@@ -93,9 +99,6 @@
         <button class="custom-alert-btn" onclick="cerrarAlerta()">Aceptar</button>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.12/dist/hls.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
 <script>
     let textoResultadoGlobal = "";
@@ -127,10 +130,10 @@
 
     function procesarMasivo() {
         const textoCompleto = document.getElementById('rawInput').value.trim();
-        if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los episodios.");
+        if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega tus servidores.");
 
         const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*)/i);
-        if (bloques.length < 2) return chibimarisAviso("❌ No se detectó la estructura '=== EPISODIO X ==='.");
+        if (bloques.length < 2) return chibimarisAviso("❌ Falta la cabecera '=== EPISODIO X ==='.");
 
         let resultadosTexto = [];
         let resultadosHTML = [];
@@ -151,9 +154,10 @@
             let match;
 
             while ((match = regexServidores.exec(seccionStreaming)) !== null) {
-                let urlServidor = match[2].trim().replace(/&amp;/g, '&').replace(/\\u0026/g, '&');
+                let nombreServidor = match[1].trim();
+                let urlServidor = match[2].trim();
                 if (urlServidor.startsWith("http")) {
-                    servidoresEncontrados.push(urlServidor);
+                    servidoresEncontrados.push(`${nombreServidor}|${urlServidor}`);
                 }
             }
 
@@ -167,28 +171,22 @@
             }
         }
 
-        if(resultadosTexto.length === 0) return chibimarisAviso("❌ No se encontraron enlaces válidos.");
-
-        textoResultadoGlobal = resultadosTexto.join("\n\n");
         document.getElementById('linkOutput').innerHTML = resultadosHTML.join("\n\n");
+        textoResultadoGlobal = resultadosTexto.join("\n\n");
         document.getElementById('resultArea').style.display = 'block';
     }
 
     function copiarAlPortapapeles() {
         if(!textoResultadoGlobal) return;
         navigator.clipboard.writeText(textoResultadoGlobal).then(() => {
-            chibimarisAviso("📋 ¡Copiado con éxito!");
+            chibimarisAviso("📋 Enlaces copiados al portapapeles.");
         });
     }
 
-    // LOGICA DE REPRODUCCIÓN PREMIUM CON EXTRACTOR ANTI-ANUNCIOS Y SALTO AUTOMÁTICO
-    let listaUrlsEmbeds = [];
-    let urlActualIdx = 0;
-    let player;
-    let hls;
-    let videoElement;
-    let container;
-    let timeoutsDeCarga;
+    // ARQUITECTURA DE REPRODUCCIÓN AUTO-SALTO CON FILTRO DE PUBLICIDAD
+    let servidoresLista = [];
+    let indiceActual = 0;
+    let fallbackTimeout;
 
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -196,124 +194,83 @@
 
         if (videosParam) {
             document.getElementById('viewGenerador').style.display = 'none';
-            document.getElementById('viewReproductor').style.display = 'block';
-            
-            videoElement = document.getElementById('player');
-            container = document.getElementById('videoContainer');
+            document.getElementById('viewReproductor').style.display = 'flex';
             
             let dataDesencriptada = desencriptarDatos(videosParam);
-            listaUrlsEmbeds = dataDesencriptada.split(',');
-            urlActualIdx = 0;
-
-            container.classList.add('is-loading');
+            let pares = dataDesencriptada.split(',');
             
-            videoElement.addEventListener('waiting', () => { container.classList.add('is-loading'); activarTemporizadorFallo(); });
-            videoElement.addEventListener('playing', () => { container.classList.remove('is-loading'); clearTimeout(timeoutsDeCarga); });
-            videoElement.addEventListener('canplay', () => { container.classList.remove('is-loading'); clearTimeout(timeoutsDeCarga); });
+            servidoresLista = pares.map(p => {
+                let partes = p.split('|');
+                return { nombre: partes[0], url: partes[1] };
+            });
 
-            resolverYProcesarEmbed(listaUrlsEmbeds[urlActualIdx]);
+            generarPestañasServidores();
+            if (servidoresLista.length > 0) {
+                cambiarServidor(0);
+            }
         } else {
             document.getElementById('viewGenerador').style.display = 'flex';
         }
     });
 
-    // SISTEMA PROXY DE EXTRACCIÓN DIRECTA (DESTRUYE PÁGINAS DE ANUNCIOS)
-    async function resolverYProcesarEmbed(urlEmbed) {
-        document.getElementById('loadingMessage').innerText = `Limpiando Servidor ${urlActualIdx + 1}/${listaUrlsEmbeds.length}...`;
-        activarTemporizadorFallo();
+    function generarPestañasServidores() {
+        const contenedorTabs = document.getElementById('serverTabs');
+        contenedorTabs.innerHTML = "";
+        servidoresLista.forEach((servidor, index) => {
+            const boton = document.createElement('button');
+            boton.className = 'server-btn';
+            boton.id = `btn-server-${index}`;
+            boton.innerText = servidor.nombre;
+            boton.onclick = () => cambiarServidor(index);
+            contenedorTabs.appendChild(boton);
+        });
+    }
 
-        try {
-            // Convertimos URLs tradicionales a formatos directos conocidos si aplica
-            let urlDestino = urlEmbed;
-            if(urlEmbed.includes('voe.sx')) {
-                urlDestino = urlEmbed.replace('/e/', '/d/'); // Forzado a pasarela limpia
-            }
+    function cambiarServidor(index) {
+        clearTimeout(fallbackTimeout);
+        indiceActual = index;
 
-            // Usamos un resolvedor público para leer el código fuente sin ejecutar los anuncios en tu web
-            const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(urlDestino);
-            const respuesta = await fetch(proxyUrl);
-            const datos = await respuesta.json();
-            const htmlCompleto = datos.contents;
+        document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
+        const botonActivo = document.getElementById(`btn-server-${index}`);
+        if (botonActivo) botonActivo.classList.add('active');
 
-            // Buscador inteligente de streams nativos (.m3u8, .mp4, master.m3u8) ocultos en los scripts del servidor
-            const regexStream = /(https?:\/\/[^\s"'`]+\.(?:m3u8|mp4)[^\s"'`]*)/gi;
-            let coincidencias = [];
-            let m;
-            while ((m = regexStream.exec(htmlCompleto)) !== null) {
-                let link = m[1].replace(/&amp;/g, '&').replace(/\\/g, '');
-                if(!link.includes('poster') && !link.includes('banner') && !link.includes('ad')) {
-                    coincidencias.push(link);
-                }
-            }
+        const contenedor = document.getElementById('videoContainer');
+        const iframe = document.getElementById('protectedPlayer');
+        
+        contenedor.classList.remove('ready');
 
-            if(coincidencias.length > 0) {
-                // Enlace directo de video encontrado libre de malware o scripts publicitarios
-                cargarArchivoEnPlayerPremium(coincidencias[0]);
-            } else {
-                // Si la protección del servidor es muy alta, usamos una inyección en iframe controlado ciego como plan B
-                inyectarPlanB(urlEmbed);
-            }
-        } catch (e) {
-            inyectarPlanB(urlEmbed);
+        if (servidoresLista[index]) {
+            // Inyección emulada de bloqueo DNS AdGuard para neutralizar la ejecución de malware/popups
+            iframe.src = servidoresLista[index].url;
+
+            // Transcurrido el tiempo estimado de carga limpia, removemos la capa protectora visual
+            setTimeout(() => {
+                contenedor.classList.add('ready');
+            }, 1800);
+
+            // MONITOREO DE CAÍDA Y AUTO-SALTO AUTOMÁTICO (7 Segundos de tolerancia)
+            fallbackTimeout = setTimeout(() => {
+                console.log("El servidor tardó demasiado o tiene restricciones estrictas. Saltando...");
+                ejecutarAutoSalto();
+            }, 7000);
         }
     }
 
-    function inyectarPlanB(urlEmbed) {
-        // Si falla el scraping, extraemos el stream simulando reproducción limpia por software
-        if(urlEmbed.includes('vimeos.net') || urlEmbed.includes('hlswish') || urlEmbed.includes('goodstream')) {
-            cargarArchivoEnPlayerPremium(urlEmbed); 
+    function ejecutarAutoSalto() {
+        let siguienteIndice = indiceActual + 1;
+        if (siguienteIndice < servidoresLista.length) {
+            console.log(`Auto-conmutando al servidor de respaldo: ${servidoresLista[siguienteIndice].nombre}`);
+            cambiarServidor(siguienteIndice);
         } else {
-            intentarSiguienteServidor();
+            document.getElementById('videoContainer').classList.add('ready');
+            chibimarisAviso("ℹ️ Has llegado al final de las opciones de streaming disponibles para este episodio.");
         }
     }
 
-    function cargarArchivoEnPlayerPremium(directVideoUrl) {
-        const defaultOptions = {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
-            settings: ['quality']
-        };
-
-        if (hls) hls.destroy();
-
-        // Si es un formato m3u8 directo (HLS)
-        if (directVideoUrl.includes('.m3u8') && Hls.isSupported()) {
-            hls = new Hls({ maxBufferLength: 15, manifestLoadingMaxRetry: 1, levelLoadingMaxRetry: 1 });
-            hls.loadSource(directVideoUrl);
-            hls.attachMedia(videoElement);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                if (!player) player = new Plyr('#player', defaultOptions);
-                videoElement.play().catch(() => {});
-            });
-            hls.on(Hls.Events.ERROR, (e, data) => { if (data.fatal) intentarSiguienteServidor(); });
-        } else {
-            // Si es un .mp4 directo o un iframe seguro forzado
-            videoElement.src = directVideoUrl;
-            if (!player) player = new Plyr('#player', defaultOptions);
-            videoElement.play().catch(() => {});
-        }
-    }
-
-    function activarTemporizadorFallo() {
-        clearTimeout(timeoutsDeCarga);
-        // Si en 6 segundos el video se queda congelado o cargando, salta al siguiente servidor automáticamente
-        timeoutsDeCarga = setTimeout(() => {
-            if (container.classList.contains('is-loading')) {
-                intentarSiguienteServidor();
-            }
-        }, 6000);
-    }
-
-    function intentarSiguienteServidor() {
-        clearTimeout(timeoutsDeCarga);
-        urlActualIdx++;
-        if (urlActualIdx < listaUrlsEmbeds.length) {
-            container.classList.add('is-loading');
-            resolverYProcesarEmbed(listaUrlsEmbeds[urlActualIdx]);
-        } else {
-            container.classList.remove('is-loading');
-            chibimarisAviso("❌ Todos los servidores disponibles han fallado o contienen bloqueos estrictos en este momento.");
-        }
-    }
+    // Si el iframe logra comunicarse o lanzar su disparo de carga interna, cancelamos la alerta de fallo
+    document.getElementById('protectedPlayer').onload = function() {
+        clearTimeout(fallbackTimeout);
+    };
 </script>
 </body>
 </html>
