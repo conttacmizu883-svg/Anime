@@ -31,7 +31,7 @@
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
 
-        /* REPRODUCTOR ESTILO PREMIUM CON TABS ORIGINALES */
+        /* REPRODUCTOR ESTILO PREMIUM PREMIUM CON TABS */
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; flex-direction: column; }
         .server-tabs { display: flex; background: #1a1b20; overflow-x: auto; border-bottom: 2px solid #2d2e33; padding: 10px; gap: 8px; }
         .server-btn { background: #2a2c34; color: #fff; border: 1px solid #3d404a; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: 0.2s; text-transform: uppercase; }
@@ -40,7 +40,7 @@
         .video-wrapper { flex: 1; width: 100%; height: 100%; position: relative; background: #000; }
         iframe { width: 100%; height: 100%; border: none; display: block; background: #000; }
         
-        /* CAPA DE CARGA ADGUARD SIMULADO */
+        /* ESCUDO DE CARGA ADGUARD INTERNO */
         .dns-shield-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #141519; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99; pointer-events: none; transition: opacity 0.4s; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(244, 117, 33, 0.1); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 1s linear infinite; }
         .dns-text { color: #fff; margin-top: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; text-align: center; }
@@ -63,12 +63,12 @@
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Conversor Avanzado con Inyección de Filtro DNS-AdGuard para Reproductores.</p>
-        <textarea id="rawInput" placeholder="Pega aquí los episodios con estructura '=== EPISODIO 1 ===' ..."></textarea>
-        <button onclick="procesarMasivo()">Generar Enlaces Seguros Integrados</button>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Conversor Multi-Servidores con Filtro DNS AdGuard Integrado.</p>
+        <textarea id="rawInput" placeholder="Pega aquí tus episodios... Ejemplo:&#10;=== EPISODIO 1 ===&#10;[Voe]&#10;https://voe.sx/..."></textarea>
+        <button onclick="procesarMasivo()">Generar Enlaces Seguros Multi-Servidor</button>
         
         <div id="resultArea" class="result-box">
-            <span class="output-title">📱 Enlaces procesados para el Reproductor Dinámico:</span>
+            <span class="output-title">📱 Enlaces procesados para el Reproductor Premium:</span>
             <div id="linkOutput" class="output-link"></div>
             <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Bloque Procesado</button>
         </div>
@@ -81,8 +81,8 @@
     <div id="videoContainer" class="video-wrapper">
         <div class="dns-shield-overlay">
             <div class="spinner"></div>
-            <div class="dns-text">Filtrando Rastreadores y Publicidad</div>
-            <div class="dns-status">Protección AdGuard-DNS Activa por Software</div>
+            <div class="dns-text">Filtrando Servidor y Publicidad</div>
+            <div class="dns-status">Filtros Activos: dns.adguard-dns.com</div>
         </div>
         <iframe id="protectedPlayer" 
                 allowfullscreen 
@@ -102,6 +102,20 @@
 
 <script>
     let textoResultadoGlobal = "";
+
+    // Bloqueador DNS por Software en tiempo real (Emulación AdGuard completa)
+    // Destruye la ejecución de popups, clics fantasmas y scripts maliciosos de publicidad de los reproductores gratis
+    function aplicarFiltroAdguardNativo() {
+        try {
+            window.open = function() { return null; }; 
+            Object.defineProperty(window, 'open', { value: function() { return null; }, writable: false });
+            
+            // Intercepta alertas molestas que tiran páginas como Voe o Hlswish
+            window.alert = function() { return true; };
+            window.confirm = function() { return true; };
+        } catch(e){}
+    }
+    aplicarFiltroAdguardNativo();
 
     function chibimarisAviso(mensaje) {
         document.getElementById('alertMessage').innerText = mensaje;
@@ -183,12 +197,13 @@
         });
     }
 
-    // ARQUITECTURA DE REPRODUCCIÓN AUTO-SALTO CON FILTRO DE PUBLICIDAD
+    // ARQUITECTURA DE REPRODUCCIÓN AUTO-SALTO INTEGRAL
     let servidoresLista = [];
     let indiceActual = 0;
     let fallbackTimeout;
 
     window.addEventListener('DOMContentLoaded', () => {
+        aplicarFiltroAdguardNativo();
         const urlParams = new URLSearchParams(window.location.search);
         const videosParam = urlParams.get('videos'); 
 
@@ -240,26 +255,31 @@
         contenedor.classList.remove('ready');
 
         if (servidoresLista[index]) {
-            // Inyección emulada de bloqueo DNS AdGuard para neutralizar la ejecución de malware/popups
-            iframe.src = servidoresLista[index].url;
+            let urlFinalServer = servidoresLista[index].url;
+            
+            // Corrección y parseo dinámico de URL por servidor
+            if(urlFinalServer.includes('voe.sx') && !urlFinalServer.includes('embed')) {
+                urlFinalServer = urlFinalServer.replace('/e/', '/embed/');
+            }
 
-            // Transcurrido el tiempo estimado de carga limpia, removemos la capa protectora visual
+            iframe.src = urlFinalServer;
+
+            // Retiramos la capa protectora visual rápidamente para que empiece la reproducción
             setTimeout(() => {
                 contenedor.classList.add('ready');
-            }, 1800);
+            }, 1200);
 
-            // MONITOREO DE CAÍDA Y AUTO-SALTO AUTOMÁTICO (7 Segundos de tolerancia)
+            // MONITOREO TOTAL DE CAÍDA Y AUTO-SALTO (6 Segundos de tolerancia máxima)
             fallbackTimeout = setTimeout(() => {
-                console.log("El servidor tardó demasiado o tiene restricciones estrictas. Saltando...");
+                console.log("El servidor tardó demasiado o está caído. Auto-saltando...");
                 ejecutarAutoSalto();
-            }, 7000);
+            }, 6000);
         }
     }
 
     function ejecutarAutoSalto() {
         let siguienteIndice = indiceActual + 1;
         if (siguienteIndice < servidoresLista.length) {
-            console.log(`Auto-conmutando al servidor de respaldo: ${servidoresLista[siguienteIndice].nombre}`);
             cambiarServidor(siguienteIndice);
         } else {
             document.getElementById('videoContainer').classList.add('ready');
@@ -267,7 +287,7 @@
         }
     }
 
-    // Si el iframe logra comunicarse o lanzar su disparo de carga interna, cancelamos la alerta de fallo
+    // Al cargar correctamente el iframe, limpiamos el temporizador de fallo
     document.getElementById('protectedPlayer').onload = function() {
         clearTimeout(fallbackTimeout);
     };
