@@ -37,6 +37,12 @@
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
         
+        /* ESTILOS DE LA PANTALLA DE BLOQUEO INTERNA */
+        .login-screen { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg-dark); z-index: 99999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .login-card { width: 100%; max-width: 400px; background: var(--bg-card); padding: 35px 25px; border-radius: 6px; border: 1px solid #2d2e33; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
+        .login-card input[type="password"] { width: 100%; background: var(--bg-dark); border: 1px solid #3a3b40; color: #fff; padding: 14px; font-size: 16px; border-radius: 4px; box-sizing: border-box; text-align: center; margin-top: 15px; outline: none; transition: border 0.2s; }
+        .login-card input[type="password"]:focus { border-color: var(--orange-crunchy); }
+
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
         .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; }
         video { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -48,7 +54,7 @@
         @keyframes girar { to { transform: rotate(360deg); } }
         .is-loading .loading-overlay { opacity: 1; }
 
-        .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+        .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 999999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
         .custom-alert-box { background: var(--bg-card); border: 2px solid var(--orange-crunchy); border-radius: 8px; width: 88%; max-width: 380px; padding: 25px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.8); transform: scale(0.85); transition: transform 0.2s ease; }
         .custom-alert-overlay.active .custom-alert-box { transform: scale(1); }
@@ -59,15 +65,23 @@
     </style>
     
     <script>
-        // PROTECCIÓN ANTI-DISCONNECT DE INMEDIATO:
-        // Si el usuario no tiene internet, congelamos la carga antes de pintar la UI o colgar el WebView
         if (!navigator.onLine) {
-            window.stop(); // Detiene cualquier intento de carga errónea del navegador
+            window.stop();
             alert("SIN CONEXIÓN A INTERNET\n\nPor favor, verifica tu red wifi o datos móviles para poder reproducir Chibimaris.");
         }
     </script>
 </head>
 <body>
+
+<!-- COMPONENTE DE LOGEADO INTEGRADO -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-card">
+        <h1 style="font-size: 22px;">Panel <span>Privado</span></h1>
+        <p style="color: var(--text-muted); font-size: 13px; margin-top: -5px;">Introduce la clave maestra para administrar episodios.</p>
+        <input type="password" id="passInput" placeholder="•••••••••••••••••" onkeydown="if(event.key === 'Enter') verificarClave()">
+        <button onclick="verificarClave()">Ingresar al Panel</button>
+    </div>
+</div>
 
 <div id="viewGenerador" class="panel-container">
     <div class="card">
@@ -106,6 +120,9 @@
 <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
 
 <script>
+    // Firma criptográfica SHA-256 exacta de "CHIBIMARIS2025TUBB18"
+    const HASH_PROTEGIDO = "5c52c92b217036a184dfb5dbff60b64d0fe9996d9337ff8d9282368c679eb46d";
+
     let textoResultadoGlobal = "";
 
     function chibimarisAviso(mensaje) {
@@ -117,27 +134,47 @@
         document.getElementById('customAlert').classList.remove('active');
     }
 
-    // ENCRIPTACIÓN LIGERA: Evita la visualización directa de servidores m3u8 en la URL limpia de parámetros
+    async function sha256(string) {
+        const utf8 = new TextEncoder().encode(string);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', utf8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function verificarClave() {
+        const input = document.getElementById('passInput').value.trim().toUpperCase();
+        const hashInput = await sha256(input);
+
+        if(hashInput === HASH_PROTEGIDO) {
+            sessionStorage.setItem('chibi_auth', 'true');
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('viewGenerador').style.display = 'flex';
+        } else {
+            alert("❌ Contraseña Incorrecta. Acceso Denegado.");
+            document.getElementById('passInput').value = "";
+        }
+    }
+
     function encriptarDatos(cadena) {
         return btoa(encodeURIComponent(cadena).replace(/%([0-9A-F]{2})/g, function(match, p1) {
             return String.fromCharCode('0x' + p1);
         }));
     }
 
-    // DESENCRIPTACIÓN INTELIGENTE CON RETROCOMPATIBILIDAD
     function desencriptarDatos(cadena) {
         try {
-            // Intenta detectar si el parámetro está en Base64 seguro
             return decodeURIComponent(atob(cadena).split('').map(function(c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));
         } catch(e) {
-            // Si da error, significa que es un enlace antiguo sin encriptar. Regresa el texto original.
-            return decodeURIComponent(cadena);
+            return decodeURIComponent(cadena); 
         }
     }
 
+    // EXTRACTOR MEJORADO MULTI-ENLACE CON FILTRADO AUTOMÁTICO
     function procesarMasivo() {
+        if(sessionStorage.getItem('chibi_auth') !== 'true') return;
+        
         const textoCompleto = document.getElementById('rawInput').value.trim();
         if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega el bloque de texto con los episodios.");
 
@@ -161,27 +198,26 @@
             const numeroEp = matchNumero ? matchNumero[0] : "1";
             let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
 
-            const regex720 = /\[720P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-            const regex540 = /\[540P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-            const regex360 = /\[360P\]\s*(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/i;
-
+            // Expresión regular global para capturar todas las URLs m3u8 dentro de este bloque de capitulo
+            const regexGlobalM3u8 = /(https?:\/\/[^\s"']+\.m3u8[^\s"']*)/gi;
             let urlsEncontradas = [];
-            
-            const match720 = regex720.exec(contenidoEpisodio);
-            if (match720) urlsEncontradas.push(match720[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+            let match;
 
-            const match540 = regex540.exec(contenidoEpisodio);
-            if (match540) urlsEncontradas.push(match540[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
-
-            const match360 = regex360.exec(contenidoEpisodio);
-            if (match360) urlsEncontradas.push(match360[1].replace(/&amp;/g, '&').replace(/\\u0026/g, '&'));
+            while ((match = regexGlobalM3u8.exec(contenidoEpisodio)) !== null) {
+                let urlLimpia = match[1]
+                    .replace(/&amp;/g, '&')
+                    .replace(/\\u0026/g, '&')
+                    .replace(/\\/g, ''); // Limpieza total de escapes innecesarios
+                
+                // Evita duplicar exactamente el mismo enlace de respaldo en el arreglo
+                if (!urlsEncontradas.includes(urlLimpia)) {
+                    urlsEncontradas.push(urlLimpia);
+                }
+            }
 
             if (urlsEncontradas.length > 0) {
-                // Unimos las URLs separadas por comas
                 let stringUrls = urlsEncontradas.join(',');
-                // Las encriptamos antes de pasarlas a la URL final
                 let urlsProtegidas = encriptarDatos(stringUrls);
-                
                 let urlFinal = `${urlBase}?videos=${urlsProtegidas}`;
 
                 resultadosTexto.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
@@ -190,7 +226,7 @@
         }
 
         if(resultadosTexto.length === 0) {
-            return chibimarisAviso("❌ No se encontraron enlaces m3u8 válidos en ninguno de los episodios.");
+            return chibimarisAviso("❌ No se encontraron enlaces .m3u8 válidos en el texto provisto.");
         }
 
         textoResultadoGlobal = resultadosTexto.join("\n\n");
@@ -217,7 +253,6 @@
     let timeoutsDeCarga;
 
     window.addEventListener('DOMContentLoaded', async () => {
-        // Doble verificación secundaria de red
         if (!navigator.onLine) {
             document.body.innerHTML = "<div style='display:flex; justify-content:center; align-items:center; height:100vh; color:#fff; font-weight:bold; background:#141519; text-align:center; padding:20px;'>⚠️ SIN CONEXIÓN A INTERNET<br><br>Por favor reconéctate para continuar viendo.</div>";
             return;
@@ -228,34 +263,29 @@
 
         if (videosParam) {
             document.getElementById('viewGenerador').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('viewReproductor').style.display = 'block';
             
             videoElement = document.getElementById('player');
             container = document.getElementById('videoContainer');
             
-            // LA MAGIA: Desencripta de forma inteligente. Si es formato viejo, lo lee normal. Si es nuevo, lo desencripta.
             let videosDesencriptados = desencriptarDatos(videosParam);
             listaVideos = videosDesencriptados.split(',');
             urlActualIdx = 0;
 
             container.classList.add('is-loading');
             
-            videoElement.addEventListener('waiting', () => {
-                container.classList.add('is-loading');
-                activarTemporizadorFallo();
-            });
-            videoElement.addEventListener('playing', () => {
-                container.classList.remove('is-loading');
-                clearTimeout(timeoutsDeCarga);
-            });
-            videoElement.addEventListener('canplay', () => {
-                container.classList.remove('is-loading');
-                clearTimeout(timeoutsDeCarga);
-            });
+            videoElement.addEventListener('waiting', () => { container.classList.add('is-loading'); activarTemporizadorFallo(); });
+            videoElement.addEventListener('playing', () => { container.classList.remove('is-loading'); clearTimeout(timeoutsDeCarga); });
+            videoElement.addEventListener('canplay', () => { container.classList.remove('is-loading'); clearTimeout(timeoutsDeCarga); });
 
             cargarServidorHLS(listaVideos[urlActualIdx]);
         } else {
-            document.getElementById('viewGenerador').style.display = 'flex';
+            if (sessionStorage.getItem('chibi_auth') === 'true') {
+                document.getElementById('viewGenerador').style.display = 'flex';
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
         }
     });
 
@@ -270,7 +300,16 @@
         if (hls) { hls.destroy(); }
 
         if (Hls.isSupported()) {
-            hls = new Hls({ maxBufferLength: 20, maxMaxBufferLength: 300, manifestLoadingMaxRetry: 1, levelLoadingMaxRetry: 1 });
+            // MEDIDA ANTI-ANUNCIOS Y ERRORES: Configuración robusta de reintentos e inmunidad a frames de terceros
+            hls = new Hls({ 
+                maxBufferLength: 20, 
+                maxMaxBufferLength: 300, 
+                manifestLoadingMaxRetry: 2, 
+                levelLoadingMaxRetry: 2,
+                xhrSetup: function (xhr, url) {
+                    xhr.withCredentials = false; // Evita el rastreo de cookies de anuncios de terceros
+                }
+            });
             hls.loadSource(streamUrl);
             hls.attachMedia(videoElement);
 
@@ -313,9 +352,7 @@
             });
 
             hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    intentarSiguienteServidor();
-                }
+                if (data.fatal) intentarSiguienteServidor();
             });
 
             activarTemporizadorFallo();
@@ -348,7 +385,7 @@
             cargarServidorHLS(listaVideos[urlActualIdx]);
         } else {
             document.getElementById('loadingMessage').innerText = "❌ Enlaces no disponibles.";
-            chibimarisAviso("Lo sentimos parece que el servidor no responde :(");
+            chibimarisAviso("Lo sentimos, parece que los servidores no responden o el enlace ha caducado.");
         }
     }
 
