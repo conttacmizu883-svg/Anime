@@ -127,7 +127,10 @@
     <div id="videoContainer" class="video-wrapper">
         <iframe id="protectedPlayer" 
                 allowfullscreen 
-                scrolling="no">
+                scrolling="no"
+                allow="autoplay; encrypted-media; picture-in-picture;"
+                loading="lazy"
+                referrerpolicy="no-referrer">
         </iframe>
     </div>
 </div>
@@ -203,6 +206,7 @@
             const numeroEp = matchNumero ? matchNumero[0] : "1";
             let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
 
+            // Filtrado estricto: Ignora todo lo que venga en la sección de DESCARGAS
             let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
             const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
             let servidoresEncontrados = [];
@@ -309,11 +313,15 @@
             let urlFinal = servidoresLista[index].url;
             let nombreLower = servidoresLista[index].nombre.toLowerCase();
 
+            // Formateadores automáticos de rutas embed para evitar errores de carga
             if ((nombreLower.includes('voe') || urlFinal.includes('voe.sx')) && !urlFinal.includes('/embed/')) {
                 urlFinal = urlFinal.replace('/e/', '/embed/');
             }
             if ((nombreLower.includes('hlswish') || urlFinal.includes('hlswish.com')) && !urlFinal.includes('/embed-')) {
                 urlFinal = urlFinal.replace('/e/', '/embed-') + '.html';
+            }
+            if ((nombreLower.includes('vimeos') || urlFinal.includes('vimeos.net')) && !urlFinal.includes('/embed-')) {
+                urlFinal = urlFinal.replace('/v/', '/embed-');
             }
 
             iframe.src = urlFinal;
