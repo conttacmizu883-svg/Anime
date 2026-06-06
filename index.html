@@ -31,31 +31,42 @@
         .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
         .btn-copy:hover { background-color: #3a3d4a; }
 
-        /* REPRODUCTOR MEJORADO CON BOTÓN FIJO DE SERVIDORES */
-        .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; flex-direction: column; }
+        /* REPRODUCTOR TOTALMENTE INMERSIVO (100% PANTALLA) */
+        .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
         
-        /* Barra superior permanente */
-        .player-header { display: flex; align-items: center; background: #1a1b20; border-bottom: 2px solid #2d2e33; padding: 10px 15px; position: relative; z-index: 100; }
-        .menu-server-container { position: relative; }
-        
-        /* Botón Servidores que NUNCA desaparece */
-        .main-server-btn { background: var(--orange-crunchy); color: #fff; border: none; padding: 10px 22px; font-size: 14px; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 8px; box-shadow: 0 0 10px rgba(244,117,33,0.3); transition: 0.2s; }
-        .main-server-btn:hover { background: var(--orange-hover); }
-        
-        /* Lista flotante de servidores */
-        .server-dropdown { display: none; position: absolute; top: calc(100% + 5px); left: 0; background: #23252b; border: 1px solid #3d404a; border-radius: 4px; min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.6); z-index: 101; overflow: hidden; }
-        .server-dropdown.show { display: block; }
-        
-        .server-btn { width: 100%; text-align: left; background: transparent; color: #fff; border: none; padding: 12px 16px; font-size: 13px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-bottom: 1px solid #2d2e33; margin: 0; border-radius: 0; transition: 0.2s; }
-        .server-btn:last-child { border-bottom: none; }
-        .server-btn:hover { background: #2e3039; color: var(--orange-crunchy); }
-        .server-btn.active { background: #1a1b20; color: var(--orange-crunchy); border-left: 3px solid var(--orange-crunchy); }
-        
-        .video-wrapper { flex: 1; width: 100%; height: 100%; position: relative; background: #000; }
+        .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; z-index: 1; }
         iframe { width: 100%; height: 100%; border: none; display: block; background: #000; }
         
+        /* WATERMARK / MARCA DE AGUA INAMOVIBLE */
+        .player-watermark { position: absolute; top: 20px; right: 20px; font-size: 16px; font-weight: 900; letter-spacing: 1.5px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10; font-family: 'Arial Black', sans-serif; pointer-events: none; text-transform: uppercase; }
+        .player-watermark span { color: var(--orange-crunchy); }
+
+        /* BOTÓN FLOTANTE LATERAL ESTILO APP PREMIUM */
+        .floating-menu-container { position: absolute; top: 50%; left: 0; transform: translateY(-50%); z-index: 10; display: flex; align-items: center; }
+        
+        .floating-trigger-btn { background: #e51c23; color: #fff; border: none; width: 44px; height: 52px; border-radius: 0 30px 30px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 4px 0 12px rgba(0,0,0,0.4); transition: background 0.2s, transform 0.2s; padding-right: 4px; }
+        .floating-trigger-btn:hover { background: #ff2d35; transform: scaleX(1.05); }
+        
+        /* Icono de flecha geométrica */
+        .arrow-icon { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 9px solid #fff; transition: transform 0.3s; }
+        .floating-menu-container.open .arrow-icon { transform: rotate(180deg); }
+
+        /* Globo indicador numérico con cantidad de servidores */
+        .server-badge { position: absolute; top: -8px; right: -4px; background: #fff; color: #000; font-size: 11px; font-weight: 900; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #e51c23; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+
+        /* PANEL DESPLEGABLE DESDE LA IZQUIERDA */
+        .server-sidebar { position: absolute; top: 0; left: -260px; width: 240px; height: 100%; background: rgba(20, 21, 25, 0.96); border-right: 2px solid var(--orange-crunchy); box-shadow: 10px 0 30px rgba(0,0,0,0.7); z-index: 9; transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding: 25px 15px; box-sizing: border-box; }
+        .server-sidebar.show { left: 0; }
+        
+        .sidebar-title { font-size: 13px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #2d2e33; padding-bottom: 8px; }
+        .sidebar-list { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        
+        .server-btn { width: 100%; text-align: left; background: #23252b; color: #fff; border: 1px solid #3d404a; padding: 12px 16px; font-size: 13px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; transition: 0.2s; }
+        .server-btn:hover { background: #2e3039; border-color: var(--orange-crunchy); color: var(--orange-crunchy); }
+        .server-btn.active { background: var(--orange-crunchy); border-color: var(--orange-crunchy); color: #fff; box-shadow: 0 0 12px rgba(244,117,33,0.3); }
+        
         /* CAPA DE CARGA ADGUARD SIMULADO */
-        .dns-shield-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #141519; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99; pointer-events: none; transition: opacity 0.4s; }
+        .dns-shield-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #141519; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.4s; }
         .spinner { width: 50px; height: 50px; border: 4px solid rgba(244, 117, 33, 0.1); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 1s linear infinite; }
         .dns-text { color: #fff; margin-top: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; text-align: center; }
         .dns-status { color: #4ade80; font-size: 12px; margin-top: 5px; font-family: monospace; }
@@ -84,257 +95,4 @@
         <div id="resultArea" class="result-box">
             <span class="output-title">📱 Enlaces procesados para el Reproductor Dinámico:</span>
             <div id="linkOutput" class="output-link"></div>
-            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Bloque Procesado</button>
-        </div>
-    </div>
-</div>
-
-<div id="viewReproductor" class="player-mode">
-    <div class="player-header">
-        <div class="menu-server-container">
-            <!-- Botón Fijo e Inamovible -->
-            <button class="main-server-btn" onclick="toggleMenuServidores()">
-                📺 Servidores ▾
-            </button>
-            <!-- Desplegable dinámico -->
-            <div id="serverDropdown" class="server-dropdown"></div>
-        </div>
-        <div id="reproductorEpisodioTitulo" style="margin-left: 20px; font-size: 14px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted);">Reproduciendo</div>
-    </div>
-    
-    <div id="videoContainer" class="video-wrapper">
-        <div class="dns-shield-overlay">
-            <div class="spinner"></div>
-            <div class="dns-text">Filtrando Rastreadores y Publicidad</div>
-            <div class="dns-status">Protección AdGuard-DNS Activa por Software</div>
-        </div>
-        <!-- Sandbox adaptado para que corran Voe, Hlswish y Goodstream sin anuncios invasivos -->
-        <iframe id="protectedPlayer" 
-                allowfullscreen 
-                scrolling="no"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation">
-        </iframe>
-    </div>
-</div>
-
-<div id="customAlert" class="custom-alert-overlay">
-    <div class="custom-alert-box">
-        <div class="custom-alert-title">Chibimaris</div>
-        <div id="alertMessage" class="custom-alert-msg"></div>
-        <button class="custom-alert-btn" onclick="cerrarAlerta()">Aceptar</button>
-    </div>
-</div>
-
-<script>
-    let textoResultadoGlobal = "";
-
-    function chibimarisAviso(mensaje) {
-        document.getElementById('alertMessage').innerText = mensaje;
-        document.getElementById('customAlert').classList.add('active');
-    }
-
-    function cerrarAlerta() {
-        document.getElementById('customAlert').classList.remove('active');
-    }
-
-    function encriptarDatos(cadena) {
-        return btoa(encodeURIComponent(cadena).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-            return String.fromCharCode('0x' + p1);
-        }));
-    }
-
-    function desencriptarDatos(cadena) {
-        try {
-            return decodeURIComponent(atob(cadena).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-        } catch(e) {
-            return decodeURIComponent(cadena); 
-        }
-    }
-
-    function toggleMenuServidores() {
-        document.getElementById('serverDropdown').classList.toggle('show');
-    }
-
-    // Cerrar el menú si hacen clic en cualquier otra parte del video o pantalla
-    window.addEventListener('click', function(e) {
-        if (!e.target.matches('.main-server-btn')) {
-            const dropdown = document.getElementById('serverDropdown');
-            if (dropdown && dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-            }
-        }
-    });
-
-    function procesarMasivo() {
-        const textoCompleto = document.getElementById('rawInput').value.trim();
-        if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega tus servidores.");
-
-        const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*)/i);
-        if (bloques.length < 2) return chibimarisAviso("❌ Falta la cabecera '=== EPISODIO X ==='.");
-
-        let resultadosTexto = [];
-        let resultadosHTML = [];
-        let urlBase = window.location.href.split('?')[0];
-
-        for (let i = 1; i < bloques.length; i += 2) {
-            let encabezadoOriginal = bloques[i].trim();
-            let contenidoEpisodio = bloques[i + 1];
-            if (!contenidoEpisodio) continue;
-
-            const matchNumero = encabezadoOriginal.match(/\d+/);
-            const numeroEp = matchNumero ? matchNumero[0] : "1";
-            let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
-
-            // Filtrar y tomar de forma estricta únicamente la sección de VIDEOS, ignorando descargas por completo
-            let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
-            const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
-            let servidoresEncontrados = [];
-            let match;
-
-            while ((match = regexServidores.exec(seccionStreaming)) !== null) {
-                let nombreServidor = match[1].trim();
-                let urlServidor = match[2].trim();
-                if (urlServidor.startsWith("http")) {
-                    servidoresEncontrados.push(`${nombreServidor}|${urlServidor}`);
-                }
-            }
-
-            if (servidoresEncontrados.length > 0) {
-                // Añadimos el número de episodio para mostrarlo en la barra superior del reproductor
-                let stringData = numeroEp + "||" + servidoresEncontrados.join(',');
-                let dataProtegida = encriptarDatos(stringData);
-                let urlFinal = `${urlBase}?videos=${dataProtegida}`;
-
-                resultadosTexto.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
-                resultadosHTML.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`);
-            }
-        }
-
-        document.getElementById('linkOutput').innerHTML = resultadosHTML.join("\n\n");
-        textoResultadoGlobal = resultadosTexto.join("\n\n");
-        document.getElementById('resultArea').style.display = 'block';
-    }
-
-    function copiarAlPortapapeles() {
-        if(!textoResultadoGlobal) return;
-        navigator.clipboard.writeText(textoResultadoGlobal).then(() => {
-            chibimarisAviso("📋 Enlaces copiados al portapapeles.");
-        });
-    }
-
-    // ARQUITECTURA DE REPRODUCCIÓN AUTO-SALTO CON FILTRO DE PUBLICIDAD
-    let servidoresLista = [];
-    let indiceActual = 0;
-    let fallbackTimeout;
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const videosParam = urlParams.get('videos'); 
-
-        if (videosParam) {
-            document.getElementById('viewGenerador').style.display = 'none';
-            document.getElementById('viewReproductor').style.display = 'flex';
-            
-            let dataDesencriptada = desencriptarDatos(videosParam);
-            
-            let numeroEpisodio = "1";
-            let datosServidores = dataDesencriptada;
-            
-            // Detectar si el link contiene metadatos del número de episodio
-            if(dataDesencriptada.includes("||")) {
-                let partesData = dataDesencriptada.split("||");
-                numeroEpisodio = partesData[0];
-                datosServidores = partesData[1];
-            }
-            
-            document.getElementById('reproductorEpisodioTitulo').innerText = `EPISODIO ${numeroEpisodio}`;
-            
-            let pares = datosServidores.split(',');
-            servidoresLista = pares.map(p => {
-                let partes = p.split('|');
-                return { nombre: partes[0], url: partes[1] };
-            });
-
-            generarPestañasServidores();
-            if (servidoresLista.length > 0) {
-                cambiarServidor(0);
-            }
-        } else {
-            document.getElementById('viewGenerador').style.display = 'flex';
-        }
-    });
-
-    function generarPestañasServidores() {
-        const dropdown = document.getElementById('serverDropdown');
-        dropdown.innerHTML = "";
-        servidoresLista.forEach((servidor, index) => {
-            const boton = document.createElement('button');
-            boton.className = 'server-btn';
-            boton.id = `btn-server-${index}`;
-            boton.innerText = servidor.nombre;
-            boton.onclick = () => {
-                cambiarServidor(index);
-                dropdown.classList.remove('show');
-            };
-            dropdown.appendChild(boton);
-        });
-    }
-
-    function cambiarServidor(index) {
-        clearTimeout(fallbackTimeout);
-        indiceActual = index;
-
-        document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
-        const botonActivo = document.getElementById(`btn-server-${index}`);
-        if (botonActivo) botonActivo.classList.add('active');
-
-        const contenedor = document.getElementById('videoContainer');
-        const iframe = document.getElementById('protectedPlayer');
-        
-        contenedor.classList.remove('ready');
-
-        if (servidoresLista[index]) {
-            let urlFinal = servidoresLista[index].url;
-            let nombreLower = servidoresLista[index].nombre.toLowerCase();
-
-            // Correcciones de iframe automáticas para evitar bloqueos y pantallas negras de servidores premium gratis
-            if ((nombreLower.includes('voe') || urlFinal.includes('voe.sx')) && !urlFinal.includes('/embed/')) {
-                urlFinal = urlFinal.replace('/e/', '/embed/');
-            }
-            if ((nombreLower.includes('hlswish') || urlFinal.includes('hlswish.com')) && !urlFinal.includes('/embed-')) {
-                urlFinal = urlFinal.replace('/e/', '/embed-') + '.html';
-            }
-
-            iframe.src = urlFinal;
-
-            // Transcurrido el tiempo estimado de carga limpia, removemos la capa protectora visual
-            setTimeout(() => {
-                contenedor.classList.add('ready');
-            }, 1500);
-
-            // MONITOREO DE CAÍDA Y AUTO-SALTO AUTOMÁTICO (9 Segundos de tolerancia para servidores pesados)
-            fallbackTimeout = setTimeout(() => {
-                console.log("Servidor lento o no responde, ejecutando auto-salto.");
-                ejecutarAutoSalto();
-            }, 9000);
-        }
-    }
-
-    function ejecutarAutoSalto() {
-        let siguienteIndice = indiceActual + 1;
-        if (siguienteIndice < servidoresLista.length) {
-            cambiarServidor(siguienteIndice);
-        } else {
-            document.getElementById('videoContainer').classList.add('ready');
-            chibimarisAviso("ℹ️ Has llegado al final de las opciones de streaming disponibles para este episodio.");
-        }
-    }
-
-    document.getElementById('protectedPlayer').onload = function() {
-        clearTimeout(fallbackTimeout);
-    };
-</script>
-</body>
-</html>
+            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar
