@@ -6,30 +6,33 @@
     <title>Chibimaris: Doramas Onl</title>
     <style>
         :root {
+            /* Colores oficiales estilo Crunchyroll */
             --orange-crunchy: #f47521;
             --orange-hover: #ff8a3d;
-            --bg-dark: #141519;
-            --bg-card: #23252b;
+            --orange-glow: rgba(244, 117, 33, 0.6);
+            --bg-dark: #0b0c0e;
+            --bg-card: #141519;
+            --bg-sidebar: rgba(20, 21, 25, 0.98);
             --text-main: #f8fafc;
             --text-muted: #a1a1aa;
         }
         html, body { background-color: var(--bg-dark); color: var(--text-main); font-family: sans-serif; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
         
         .panel-container { display: none; flex-direction: column; align-items: center; padding: 40px 20px; height: 100%; overflow-y: auto; box-sizing: border-box; }
-        .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #2d2e33; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .card { width: 100%; max-width: 700px; background-color: var(--bg-card); padding: 30px; border-radius: 4px; border: 1px solid #23252b; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         h1 { color: var(--orange-crunchy); margin-top: 0; text-transform: uppercase; font-size: 24px; letter-spacing: 1px; }
         h1 span { color: #fff; }
-        textarea { width: 100%; height: 220px; background-color: var(--bg-dark); color: #fff; border: 1px solid #3a3b40; border-radius: 4px; padding: 12px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: none; }
-        button { width: 100%; background-color: var(--orange-crunchy); color: #fff; border: none; padding: 14px; font-size: 16px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; margin-top: 15px; transition: 0.2s; }
-        button:hover { background-color: var(--orange-hover); }
+        textarea { width: 100%; height: 220px; background-color: var(--bg-dark); color: #fff; border: 1px solid #23252b; border-radius: 4px; padding: 12px; box-sizing: border-box; font-family: monospace; font-size: 13px; resize: none; }
+        button { width: 100%; background-color: var(--orange-crunchy); color: #fff; border: none; padding: 14px; font-size: 16px; font-weight: bold; text-transform: uppercase; border-radius: 4px; cursor: pointer; margin-top: 15px; transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        button:hover { background-color: var(--orange-hover); box-shadow: 0 0 15px var(--orange-glow); }
         .result-box { margin-top: 25px; background: var(--bg-dark); padding: 20px; border-left: 4px solid var(--orange-crunchy); display: none; }
         .output-title { font-size: 14px; color: #fff; font-weight: bold; display: block; margin-top: 15px; }
         
-        .output-link { background: #1e2026; padding: 12px; border: 1px solid #333; color: var(--text-main); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; white-space: pre-wrap; line-height: 1.5; max-height: 300px; overflow-y: auto; }
+        .output-link { background: #141519; padding: 12px; border: 1px solid #23252b; color: var(--text-main); font-size: 13px; word-break: break-all; margin-top: 5px; border-radius: 4px; font-family: monospace; user-select: all; white-space: pre-wrap; line-height: 1.5; max-height: 300px; overflow-y: auto; }
         .output-link span.link-color { color: var(--orange-crunchy); }
 
-        .btn-copy { background-color: #2e3039; border: 1px solid #444; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
-        .btn-copy:hover { background-color: #3a3d4a; }
+        .btn-copy { background-color: #23252b; border: 1px solid #2d2e33; color: #fff; margin-top: 10px; padding: 10px; font-size: 13px; }
+        .btn-copy:hover { background-color: #2e3039; }
 
         /* REPRODUCTOR TOTALMENTE INMERSIVO (100% PANTALLA) */
         .player-mode { width: 100vw; height: 100vh; display: none; background: #000; position: relative; }
@@ -37,37 +40,52 @@
         .video-wrapper { width: 100%; height: 100%; position: relative; background: #000; z-index: 1; }
         iframe { width: 100%; height: 100%; border: none; display: block; background: #000; }
         
-        /* WATERMARK / MARCA DE AGUA INAMOVIBLE */
+        /* WATERMARK / MARCA DE AGUA ESTILO CRUNCHYROLL */
         .player-watermark { position: absolute; top: 20px; right: 20px; font-size: 16px; font-weight: 900; letter-spacing: 1.5px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 10; font-family: 'Arial Black', sans-serif; pointer-events: none; text-transform: uppercase; }
-        .player-watermark span { color: var(--orange-crunchy); }
+        .player-watermark span { color: var(--orange-crunchy); animation: glowPulse 2s infinite alternate; }
 
-        /* BOTÓN FLOTANTE LATERAL ESTILO APP PREMIUM */
+        /* BOTÓN FLOTANTE LATERAL CON ANIMACIÓN Y BRILLO */
         .floating-menu-container { position: absolute; top: 50%; left: 0; transform: translateY(-50%); z-index: 10; display: flex; align-items: center; }
         
-        .floating-trigger-btn { background: #e51c23; color: #fff; border: none; width: 44px; height: 52px; border-radius: 0 30px 30px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 4px 0 12px rgba(0,0,0,0.4); transition: background 0.2s, transform 0.2s; padding-right: 4px; }
-        .floating-trigger-btn:hover { background: #ff2d35; transform: scaleX(1.05); }
+        .floating-trigger-btn { background: var(--orange-crunchy); color: #fff; border: none; width: 46px; height: 54px; border-radius: 0 30px 30px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 4px 0 15px var(--orange-glow); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); padding-right: 4px; animation: buttonPulse 2.5s infinite; }
+        .floating-trigger-btn:hover { background: var(--orange-hover); box-shadow: 6px 0 20px var(--orange-crunchy); transform: scaleX(1.08); animation-play-state: paused; }
         
-        /* Icono de flecha geométrica */
-        .arrow-icon { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 9px solid #fff; transition: transform 0.3s; }
+        /* Icono de flecha geométrica animada */
+        .arrow-icon { width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 9px solid #fff; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
         .floating-menu-container.open .arrow-icon { transform: rotate(180deg); }
 
         /* Globo indicador numérico con cantidad de servidores */
-        .server-badge { position: absolute; top: -8px; right: -4px; background: #fff; color: #000; font-size: 11px; font-weight: 900; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #e51c23; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .server-badge { position: absolute; top: -6px; right: -4px; background: #fff; color: #000; font-size: 11px; font-weight: 900; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--orange-crunchy); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
-        /* PANEL DESPLEGABLE DESDE LA IZQUIERDA */
-        .server-sidebar { position: absolute; top: 0; left: -260px; width: 240px; height: 100%; background: rgba(20, 21, 25, 0.96); border-right: 2px solid var(--orange-crunchy); box-shadow: 10px 0 30px rgba(0,0,0,0.7); z-index: 9; transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding: 25px 15px; box-sizing: border-box; }
+        /* PANEL DESPLEGABLE LATERAL */
+        .server-sidebar { position: absolute; top: 0; left: -270px; width: 250px; height: 100%; background: var(--bg-sidebar); border-right: 2px solid var(--orange-crunchy); box-shadow: 10px 0 30px rgba(0,0,0,0.8); z-index: 9; transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; padding: 25px 15px; box-sizing: border-box; backdrop-filter: blur(5px); }
         .server-sidebar.show { left: 0; }
         
-        .sidebar-title { font-size: 13px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #2d2e33; padding-bottom: 8px; }
-        .sidebar-list { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .sidebar-title { font-size: 13px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; border-bottom: 1px solid #23252b; padding-bottom: 8px; }
+        .sidebar-list { flex: 1; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
         
-        .server-btn { width: 100%; text-align: left; background: #23252b; color: #fff; border: 1px solid #3d404a; padding: 12px 16px; font-size: 13px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; transition: 0.2s; }
-        .server-btn:hover { background: #2e3039; border-color: var(--orange-crunchy); color: var(--orange-crunchy); }
-        .server-btn.active { background: var(--orange-crunchy); border-color: var(--orange-crunchy); color: #fff; box-shadow: 0 0 12px rgba(244,117,33,0.3); }
+        /* Botones de servidores con diseño de Brillo e Interacción */
+        .server-btn { width: 100%; text-align: left; background: #141519; color: #fff; border: 1px solid #23252b; padding: 14px 16px; font-size: 13px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; transition: all 0.25s ease; position: relative; overflow: hidden; }
+        .server-btn:hover { background: #1f2026; border-color: var(--orange-hover); color: var(--orange-hover); box-shadow: 0 0 10px rgba(244, 117, 33, 0.2); padding-left: 22px; }
+        
+        /* Servidor activo con Brillo Intenso permanente */
+        .server-btn.active { background: var(--orange-crunchy); border-color: var(--orange-crunchy); color: #fff; box-shadow: 0 0 15px var(--orange-glow); padding-left: 22px; }
+        .server-btn.active::before { content: ''; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px #fff; }
+
+        /* ANIMACIONES EN CSS */
+        @keyframes glowPulse {
+            from { text-shadow: 0 0 4px rgba(244,117,33,0.4); }
+            to { text-shadow: 0 0 12px var(--orange-crunchy), 0 0 20px var(--orange-crunchy); }
+        }
+        @keyframes buttonPulse {
+            0% { box-shadow: 4px 0 12px var(--orange-glow); }
+            50% { box-shadow: 6px 0 20px rgba(244, 117, 33, 0.8); }
+            100% { box-shadow: 4px 0 12px var(--orange-glow); }
+        }
 
         .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 999999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
-        .custom-alert-box { background: var(--bg-card); border: 2px solid var(--orange-crunchy); border-radius: 8px; width: 88%; max-width: 380px; padding: 25px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.8); transform: scale(0.85); transition: transform 0.2s ease; }
+        .custom-alert-box { background: var(--bg-card); border: 2px solid var(--orange-crunchy); border-radius: 8px; width: 88%; max-width: 380px; padding: 25px; box-sizing: border-box; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.8); transform: scale(0.85); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .custom-alert-overlay.active .custom-alert-box { transform: scale(1); }
         .custom-alert-title { color: var(--orange-crunchy); font-size: 19px; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .custom-alert-msg { color: var(--text-main); font-size: 14px; line-height: 1.5; margin-bottom: 22px; }
@@ -167,140 +185,4 @@
 
     function procesarMasivo() {
         const textoCompleto = document.getElementById('rawInput').value.trim();
-        if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega tus servidores.");
-
-        const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*)/i);
-        if (bloques.length < 2) return chibimarisAviso("❌ Falta la cabecera '=== EPISODIO X ==='.");
-
-        let resultadosTexto = [];
-        let resultadosHTML = [];
-        let urlBase = window.location.href.split('?')[0];
-
-        for (let i = 1; i < bloques.length; i += 2) {
-            let encabezadoOriginal = bloques[i].trim();
-            let contenidoEpisodio = bloques[i + 1];
-            if (!contenidoEpisodio) continue;
-
-            const matchNumero = encabezadoOriginal.match(/\d+/);
-            const numeroEp = matchNumero ? matchNumero[0] : "1";
-            let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
-
-            let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
-            const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
-            let servidoresEncontrados = [];
-            let match;
-
-            while ((match = regexServidores.exec(seccionStreaming)) !== null) {
-                let nombreServidor = match[1].trim();
-                let urlServidor = match[2].trim();
-                if (urlServidor.startsWith("http")) {
-                    servidoresEncontrados.push(`${nombreServidor}|${urlServidor}`);
-                }
-            }
-
-            if (servidoresEncontrados.length > 0) {
-                let stringData = numeroEp + "||" + servidoresEncontrados.join(',');
-                let dataProtegida = encriptarDatos(stringData);
-                let urlFinal = `${urlBase}?videos=${dataProtegida}`;
-
-                resultadosTexto.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
-                resultadosHTML.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`);
-            }
-        }
-
-        document.getElementById('linkOutput').innerHTML = resultadosHTML.join("\n\n");
-        textoResultadoGlobal = resultadosTexto.join("\n\n");
-        document.getElementById('resultArea').style.display = 'block';
-    }
-
-    function copiarAlPortapapeles() {
-        if(!textoResultadoGlobal) return;
-        navigator.clipboard.writeText(textoResultadoGlobal).then(() => {
-            chibimarisAviso("📋 Enlaces copiados al portapapeles.");
-        });
-    }
-
-    let servidoresLista = [];
-    let indiceActual = 0;
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const videosParam = urlParams.get('videos'); 
-
-        if (videosParam) {
-            document.getElementById('viewGenerador').style.display = 'none';
-            document.getElementById('viewReproductor').style.display = 'block';
-            
-            let dataDesencriptada = desencriptarDatos(videosParam);
-            
-            let numeroEpisodio = "1";
-            let datosServidores = dataDesencriptada;
-            
-            if(dataDesencriptada.includes("||")) {
-                let partesData = dataDesencriptada.split("||");
-                numeroEpisodio = partesData[0];
-                datosServidores = partesData[1];
-            }
-            
-            document.getElementById('sidebarTitle').innerText = `EPISODIO ${numeroEpisodio} - OPCIONES`;
-            
-            let pares = datosServidores.split(',');
-            servidoresLista = pares.map(p => {
-                let partes = p.split('|');
-                return { nombre: partes[0], url: partes[1] };
-            });
-
-            document.getElementById('serverBadgeCount').innerText = servidoresLista.length;
-
-            generarPestañasServidores();
-            if (servidoresLista.length > 0) {
-                cambiarServidor(0);
-            }
-        } else {
-            document.getElementById('viewGenerador').style.display = 'flex';
-        }
-    });
-
-    function generarPestañasServidores() {
-        const contenedorLista = document.getElementById('sidebarList');
-        contenedorLista.innerHTML = "";
-        servidoresLista.forEach((servidor, index) => {
-            const boton = document.createElement('button');
-            boton.className = 'server-btn';
-            boton.id = `btn-server-${index}`;
-            boton.innerText = servidor.nombre;
-            boton.onclick = () => {
-                cambiarServidor(index);
-                document.getElementById('floatingContainer').classList.remove('open');
-                document.getElementById('serverSidebar').classList.remove('show');
-            };
-            contenedorLista.appendChild(boton);
-        });
-    }
-
-    function cambiarServidor(index) {
-        indiceActual = index;
-
-        document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
-        const botonActivo = document.getElementById(`btn-server-${index}`);
-        if (botonActivo) botonActivo.classList.add('active');
-
-        const iframe = document.getElementById('protectedPlayer');
-
-        if (servidoresLista[index]) {
-            let urlFinal = servidoresLista[index].url;
-            let nombreLower = servidoresLista[index].nombre.toLowerCase();
-
-            if ((nombreLower.includes('voe') || urlFinal.includes('voe.sx')) && !urlFinal.includes('/embed/')) {
-                urlFinal = urlFinal.replace('/e/', '/embed/');
-            }
-            if ((nombreLower.includes('hlswish') || urlFinal.includes('hlswish.com')) && !urlFinal.includes('/embed-')) {
-                urlFinal = urlFinal.replace('/e/', '/embed-') + '.html';
-            }
-
-            iframe.src = urlFinal;
-        }
-    }
-</script>
-</body>
-</html>
+        if(!textoCompleto) return chibimarisAviso("⚠️
