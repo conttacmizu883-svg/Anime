@@ -127,7 +127,10 @@
     <div id="videoContainer" class="video-wrapper">
         <iframe id="protectedPlayer" 
                 allowfullscreen 
-                scrolling="no">
+                scrolling="no"
+                allow="autoplay; encrypted-media; picture-in-picture;"
+                loading="lazy"
+                referrerpolicy="no-referrer">
         </iframe>
     </div>
 </div>
@@ -185,4 +188,145 @@
 
     function procesarMasivo() {
         const textoCompleto = document.getElementById('rawInput').value.trim();
-        if(!textoCompleto) return chibimarisAviso("⚠️
+        if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega tus servidores.");
+
+        const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*)/i);
+        if (bloques.length < 2) return chibimarisAviso("❌ Falta la cabecera '=== EPISODIO X ==='.");
+
+        let resultadosTexto = [];
+        let resultadosHTML = [];
+        let urlBase = window.location.href.split('?')[0];
+
+        for (let i = 1; i < bloques.length; i += 2) {
+            let encabezadoOriginal = bloques[i].trim();
+            let contenidoEpisodio = bloques[i + 1];
+            if (!contenidoEpisodio) continue;
+
+            const matchNumero = encabezadoOriginal.match(/\d+/);
+            const numeroEp = matchNumero ? matchNumero[0] : "1";
+            let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
+
+            // Filtrado estricto: Ignora todo lo que venga en la sección de DESCARGAS
+            let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
+            const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
+            let servidoresEncontrados = [];
+            let match;
+
+            while ((match = regexServidores.exec(seccionStreaming)) !== null) {
+                let nombreServidor = match[1].trim();
+                let urlServidor = match[2].trim();
+                if (urlServidor.startsWith("http")) {
+                    servidoresEncontrados.push(`${nombreServidor}|${urlServidor}`);
+                }
+            }
+
+            if (servidoresEncontrados.length > 0) {
+                let stringData = numeroEp + "||" + servidoresEncontrados.join(',');
+                let dataProtegida = encriptarDatos(stringData);
+                let urlFinal = `${urlBase}?videos=${dataProtegida}`;
+
+                resultadosTexto.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
+                resultadosHTML.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`);
+            }
+        }
+
+        document.getElementById('linkOutput').innerHTML = resultadosHTML.join("\n\n");
+        textoResultadoGlobal = resultadosTexto.join("\n\n");
+        document.getElementById('resultArea').style.display = 'block';
+    }
+
+    function copiarAlPortapapeles() {
+        if(!textoResultadoGlobal) return;
+        navigator.clipboard.writeText(textoResultadoGlobal).then(() => {
+            chibimarisAviso("📋 Enlaces copiados al portapapeles.");
+        });
+    }
+
+    let servidoresLista = [];
+    let indiceActual = 0;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const videosParam = urlParams.get('videos'); 
+
+        if (videosParam) {
+            document.getElementById('viewGenerador').style.display = 'none';
+            document.getElementById('viewReproductor').style.display = 'block';
+            
+            let dataDesencriptada = desencriptarDatos(videosParam);
+            
+            let numeroEpisodio = "1";
+            let datosServidores = dataDesencriptada;
+            
+            if(dataDesencriptada.includes("||")) {
+                let partesData = dataDesencriptada.split("||");
+                numeroEpisodio = partesData[0];
+                datosServidores = partesData[1];
+            }
+            
+            document.getElementById('sidebarTitle').innerText = `EPISODIO ${numeroEpisodio} - OPCIONES`;
+            
+            let pares = datosServidores.split(',');
+            servidoresLista = pares.map(p => {
+                let partes = p.split('|');
+                return { nombre: partes[0], url: partes[1] };
+            });
+
+            document.getElementById('serverBadgeCount').innerText = servidoresLista.length;
+
+            generarPestañasServidores();
+            if (servidoresLista.length > 0) {
+                cambiarServidor(0);
+            }
+        } else {
+            document.getElementById('viewGenerador').style.display = 'flex';
+        }
+    });
+
+    function generarPestañasServidores() {
+        const contenedorLista = document.getElementById('sidebarList');
+        contenedorLista.innerHTML = "";
+        servidoresLista.forEach((servidor, index) => {
+            const boton = document.createElement('button');
+            boton.className = 'server-btn';
+            boton.id = `btn-server-${index}`;
+            boton.innerText = servidor.nombre;
+            boton.onclick = () => {
+                cambiarServidor(index);
+                document.getElementById('floatingContainer').classList.remove('open');
+                document.getElementById('serverSidebar').classList.remove('show');
+            };
+            contenedorLista.appendChild(boton);
+        });
+    }
+
+    function cambiarServidor(index) {
+        indiceActual = index;
+
+        document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
+        const botonActivo = document.getElementById(`btn-server-${index}`);
+        if (botonActivo) botonActivo.classList.add('active');
+
+        const iframe = document.getElementById('protectedPlayer');
+
+        if (servidoresLista[index]) {
+            let urlFinal = servidoresLista[index].url;
+            let nombreLower = servidoresLista[index].nombre.toLowerCase();
+
+            // Formateadores automáticos de rutas embed para evitar errores de carga
+            if ((nombreLower.includes('voe') || urlFinal.includes('voe.sx')) && !urlFinal.includes('/embed/')) {
+                urlFinal = urlFinal.replace('/e/', '/embed/');
+            }
+            if ((nombreLower.includes('hlswish') || urlFinal.includes('hlswish.com')) && !urlFinal.includes('/embed-')) {
+                urlFinal = urlFinal.replace('/e/', '/embed-') + '.html';
+            }
+            if ((nombreLower.includes('vimeos') || urlFinal.includes('vimeos.net')) && !urlFinal.includes('/embed-')) {
+                urlFinal = urlFinal.replace('/v/', '/embed-');
+            }
+
+            iframe.src = urlFinal;
+        }
+    }
+</script>
+</body>
+</html>
