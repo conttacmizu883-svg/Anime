@@ -64,15 +64,6 @@
         .server-btn { width: 100%; text-align: left; background: #23252b; color: #fff; border: 1px solid #3d404a; padding: 12px 16px; font-size: 13px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; transition: 0.2s; }
         .server-btn:hover { background: #2e3039; border-color: var(--orange-crunchy); color: var(--orange-crunchy); }
         .server-btn.active { background: var(--orange-crunchy); border-color: var(--orange-crunchy); color: #fff; box-shadow: 0 0 12px rgba(244,117,33,0.3); }
-        
-        /* CAPA DE CARGA ADGUARD SIMULADO */
-        .dns-shield-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #141519; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; pointer-events: none; transition: opacity 0.4s; }
-        .spinner { width: 50px; height: 50px; border: 4px solid rgba(244, 117, 33, 0.1); border-top-color: var(--orange-crunchy); border-radius: 50%; animation: girar 1s linear infinite; }
-        .dns-text { color: #fff; margin-top: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; text-align: center; }
-        .dns-status { color: #4ade80; font-size: 12px; margin-top: 5px; font-family: monospace; }
-        @keyframes girar { to { transform: rotate(360deg); } }
-        
-        .ready .dns-shield-overlay { opacity: 0; }
 
         .custom-alert-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 999999; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
         .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
@@ -88,11 +79,228 @@
 <div id="viewGenerador" class="panel-container">
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
-        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Conversor Avanzado con Inyección de Filtro DNS-AdGuard para Reproductores.</p>
+        <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Conversor Avanzado para Reproductores Multimedia.</p>
         <textarea id="rawInput" placeholder="Pega aquí los episodios con estructura '=== EPISODIO 1 ===' ..."></textarea>
-        <button onclick="procesarMasivo()">Generar Enlaces Seguros Integrados</button>
+        <button onclick="procesarMasivo()">Generar Enlaces Integrados</button>
         
         <div id="resultArea" class="result-box">
             <span class="output-title">📱 Enlaces procesados para el Reproductor Dinámico:</span>
             <div id="linkOutput" class="output-link"></div>
-            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar
+            <button class="btn-copy" onclick="copiarAlPortapapeles()">📋 Copiar Todo el Bloque Procesado</button>
+        </div>
+    </div>
+</div>
+
+<div id="viewReproductor" class="player-mode">
+    <div class="player-watermark">Chibimaris<span>.</span></div>
+    
+    <div id="floatingContainer" class="floating-menu-container">
+        <button class="floating-trigger-btn" onclick="toggleMenuFlotante(event)">
+            <div class="arrow-icon"></div>
+            <div id="serverBadgeCount" class="server-badge">0</div>
+        </button>
+    </div>
+
+    <div id="serverSidebar" class="server-sidebar">
+        <div id="sidebarTitle" class="sidebar-title">Servidores Opciones</div>
+        <div id="sidebarList" class="sidebar-list"></div>
+    </div>
+    
+    <div id="videoContainer" class="video-wrapper">
+        <iframe id="protectedPlayer" 
+                allowfullscreen 
+                scrolling="no">
+        </iframe>
+    </div>
+</div>
+
+<div id="customAlert" class="custom-alert-overlay">
+    <div class="custom-alert-box">
+        <div class="custom-alert-title">Chibimaris</div>
+        <div id="alertMessage" class="custom-alert-msg"></div>
+        <button class="custom-alert-btn" onclick="cerrarAlerta()">Aceptar</button>
+    </div>
+</div>
+
+<script>
+    let textoResultadoGlobal = "";
+
+    function chibimarisAviso(mensaje) {
+        document.getElementById('alertMessage').innerText = mensaje;
+        document.getElementById('customAlert').classList.add('active');
+    }
+
+    function cerrarAlerta() {
+        document.getElementById('customAlert').classList.remove('active');
+    }
+
+    function encriptarDatos(cadena) {
+        return btoa(encodeURIComponent(cadena).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+            return String.fromCharCode('0x' + p1);
+        }));
+    }
+
+    function desencriptarDatos(cadena) {
+        try {
+            return decodeURIComponent(atob(cadena).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+        } catch(e) {
+            return decodeURIComponent(cadena); 
+        }
+    }
+
+    function toggleMenuFlotante(event) {
+        if(event) event.stopPropagation();
+        document.getElementById('floatingContainer').classList.toggle('open');
+        document.getElementById('serverSidebar').classList.toggle('show');
+    }
+
+    window.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('serverSidebar');
+        const container = document.getElementById('floatingContainer');
+        if (sidebar && sidebar.classList.contains('show') && !sidebar.contains(e.target) && !container.contains(e.target)) {
+            container.classList.remove('open');
+            sidebar.classList.remove('show');
+        }
+    });
+
+    function procesarMasivo() {
+        const textoCompleto = document.getElementById('rawInput').value.trim();
+        if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega tus servidores.");
+
+        const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*)/i);
+        if (bloques.length < 2) return chibimarisAviso("❌ Falta la cabecera '=== EPISODIO X ==='.");
+
+        let resultadosTexto = [];
+        let resultadosHTML = [];
+        let urlBase = window.location.href.split('?')[0];
+
+        for (let i = 1; i < bloques.length; i += 2) {
+            let encabezadoOriginal = bloques[i].trim();
+            let contenidoEpisodio = bloques[i + 1];
+            if (!contenidoEpisodio) continue;
+
+            const matchNumero = encabezadoOriginal.match(/\d+/);
+            const numeroEp = matchNumero ? matchNumero[0] : "1";
+            let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
+
+            let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
+            const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
+            let servidoresEncontrados = [];
+            let match;
+
+            while ((match = regexServidores.exec(seccionStreaming)) !== null) {
+                let nombreServidor = match[1].trim();
+                let urlServidor = match[2].trim();
+                if (urlServidor.startsWith("http")) {
+                    servidoresEncontrados.push(`${nombreServidor}|${urlServidor}`);
+                }
+            }
+
+            if (servidoresEncontrados.length > 0) {
+                let stringData = numeroEp + "||" + servidoresEncontrados.join(',');
+                let dataProtegida = encriptarDatos(stringData);
+                let urlFinal = `${urlBase}?videos=${dataProtegida}`;
+
+                resultadosTexto.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
+                resultadosHTML.push(`${tituloEstandar}\n\n🎬 VIDEOS:\n[Chibimaris]\n<span class="link-color">${urlFinal}</span>`);
+            }
+        }
+
+        document.getElementById('linkOutput').innerHTML = resultadosHTML.join("\n\n");
+        textoResultadoGlobal = resultadosTexto.join("\n\n");
+        document.getElementById('resultArea').style.display = 'block';
+    }
+
+    function copiarAlPortapapeles() {
+        if(!textoResultadoGlobal) return;
+        navigator.clipboard.writeText(textoResultadoGlobal).then(() => {
+            chibimarisAviso("📋 Enlaces copiados al portapapeles.");
+        });
+    }
+
+    let servidoresLista = [];
+    let indiceActual = 0;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const videosParam = urlParams.get('videos'); 
+
+        if (videosParam) {
+            document.getElementById('viewGenerador').style.display = 'none';
+            document.getElementById('viewReproductor').style.display = 'block';
+            
+            let dataDesencriptada = desencriptarDatos(videosParam);
+            
+            let numeroEpisodio = "1";
+            let datosServidores = dataDesencriptada;
+            
+            if(dataDesencriptada.includes("||")) {
+                let partesData = dataDesencriptada.split("||");
+                numeroEpisodio = partesData[0];
+                datosServidores = partesData[1];
+            }
+            
+            document.getElementById('sidebarTitle').innerText = `EPISODIO ${numeroEpisodio} - OPCIONES`;
+            
+            let pares = datosServidores.split(',');
+            servidoresLista = pares.map(p => {
+                let partes = p.split('|');
+                return { nombre: partes[0], url: partes[1] };
+            });
+
+            document.getElementById('serverBadgeCount').innerText = servidoresLista.length;
+
+            generarPestañasServidores();
+            if (servidoresLista.length > 0) {
+                cambiarServidor(0);
+            }
+        } else {
+            document.getElementById('viewGenerador').style.display = 'flex';
+        }
+    });
+
+    function generarPestañasServidores() {
+        const contenedorLista = document.getElementById('sidebarList');
+        contenedorLista.innerHTML = "";
+        servidoresLista.forEach((servidor, index) => {
+            const boton = document.createElement('button');
+            boton.className = 'server-btn';
+            boton.id = `btn-server-${index}`;
+            boton.innerText = servidor.nombre;
+            boton.onclick = () => {
+                cambiarServidor(index);
+                document.getElementById('floatingContainer').classList.remove('open');
+                document.getElementById('serverSidebar').classList.remove('show');
+            };
+            contenedorLista.appendChild(boton);
+        });
+    }
+
+    function cambiarServidor(index) {
+        indiceActual = index;
+
+        document.querySelectorAll('.server-btn').forEach(btn => btn.classList.remove('active'));
+        const botonActivo = document.getElementById(`btn-server-${index}`);
+        if (botonActivo) botonActivo.classList.add('active');
+
+        const iframe = document.getElementById('protectedPlayer');
+
+        if (servidoresLista[index]) {
+            let urlFinal = servidoresLista[index].url;
+            let nombreLower = servidoresLista[index].nombre.toLowerCase();
+
+            if ((nombreLower.includes('voe') || urlFinal.includes('voe.sx')) && !urlFinal.includes('/embed/')) {
+                urlFinal = urlFinal.replace('/e/', '/embed/');
+            }
+            if ((nombreLower.includes('hlswish') || urlFinal.includes('hlswish.com')) && !urlFinal.includes('/embed-')) {
+                urlFinal = urlFinal.replace('/e/', '/embed-') + '.html';
+            }
+
+            iframe.src = urlFinal;
+        }
+    }
+</script>
+</body>
+</html>
