@@ -98,7 +98,7 @@
     <div class="card">
         <h1>Chibimaris: <span>Doramas Onl</span></h1>
         <p style="color: var(--text-muted); margin-top:-10px; font-size:14px;">Conversor Avanzado para Reproductores Multimedia.</p>
-        <textarea id="rawInput" placeholder="Pega aquí los episodios con estructura '=== EPISODIO 1 ===' ..."></textarea>
+        <textarea id="rawInput" placeholder="Pega aquí los episodios con '=== EPISODIO 1 ===' o películas con '=== OPCIONES ===' ..."></textarea>
         <button onclick="procesarMasivo()">Generar Enlaces Integrados</button>
         
         <div id="resultArea" class="result-box">
@@ -120,7 +120,8 @@
     </div>
 
     <div id="serverSidebar" class="server-sidebar">
-        <div id="sidebarTitle" class="sidebar-title">Servidores Opciones</div>
+        <!-- Título base corregido para evitar confusiones de capítulos -->
+        <div id="sidebarTitle" class="sidebar-title">OPCIONES DE REPRODUCCIÓN</div>
         <div id="sidebarList" class="sidebar-list"></div>
     </div>
     
@@ -190,8 +191,8 @@
         const textoCompleto = document.getElementById('rawInput').value.trim();
         if(!textoCompleto) return chibimarisAviso("⚠️ Por favor, pega tus servidores.");
 
-        const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*)/i);
-        if (bloques.length < 2) return chibimarisAviso("❌ Falta la cabecera '=== EPISODIO X ==='.");
+        const bloques = textoCompleto.split(/(====*\s*(?:EPISODIO|CAPITULO|CAP|EP)\s*\d+\s*====*|====*\s*OPCIONES\s*====*)/i);
+        if (bloques.length < 2) return chibimarisAviso("❌ Falta la cabecera '=== EPISODIO X ===' o '=== OPCIONES ==='.");
 
         let resultadosTexto = [];
         let resultadosHTML = [];
@@ -202,11 +203,19 @@
             let contenidoEpisodio = bloques[i + 1];
             if (!contenidoEpisodio) continue;
 
-            const matchNumero = encabezadoOriginal.match(/\d+/);
-            const numeroEp = matchNumero ? matchNumero[0] : "1";
-            let tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
+            let tipoContenido = "serie";
+            let numeroEp = "1";
+            let tituloEstandar = "";
 
-            // Filtrado estricto: Ignora todo lo que venga en la sección de DESCARGAS
+            if (encabezadoOriginal.toUpperCase().includes("OPCIONES")) {
+                tipoContenido = "pelicula";
+                tituloEstandar = "=== OPCIONES ===";
+            } else {
+                const matchNumero = encabezadoOriginal.match(/\d+/);
+                numeroEp = matchNumero ? matchNumero[0] : "1";
+                tituloEstandar = `=== EPISODIO ${numeroEp} ===`;
+            }
+
             let seccionStreaming = contenidoEpisodio.split(/📥\s*DESCARGAS:/i)[0];
             const regexServidores = /\[([^\]]+)\]\s*(https?:\/\/[^\s"'\n]+)/gi;
             let servidoresEncontrados = [];
@@ -221,7 +230,8 @@
             }
 
             if (servidoresEncontrados.length > 0) {
-                let stringData = numeroEp + "||" + servidoresEncontrados.join(',');
+                let idIdentificador = (tipoContenido === "pelicula") ? "MOVIE" : numeroEp;
+                let stringData = idIdentificador + "||" + servidoresEncontrados.join(',');
                 let dataProtegida = encriptarDatos(stringData);
                 let urlFinal = `${urlBase}?videos=${dataProtegida}`;
 
@@ -255,16 +265,21 @@
             
             let dataDesencriptada = desencriptarDatos(videosParam);
             
-            let numeroEpisodio = "1";
+            let identificador = "1";
             let datosServidores = dataDesencriptada;
             
             if(dataDesencriptada.includes("||")) {
                 let partesData = dataDesencriptada.split("||");
-                numeroEpisodio = partesData[0];
+                identificador = partesData[0];
                 datosServidores = partesData[1];
             }
             
-            document.getElementById('sidebarTitle').innerText = `EPISODIO ${numeroEpisodio} - OPCIONES`;
+            // Verificación para actualizar el título lateral sin usar la palabra capítulo
+            if (identificador === "MOVIE") {
+                document.getElementById('sidebarTitle').innerText = `PELÍCULA - OPCIONES`;
+            } else {
+                document.getElementById('sidebarTitle').innerText = `EPISODIO ${identificador} - OPCIONES`;
+            }
             
             let pares = datosServidores.split(',');
             servidoresLista = pares.map(p => {
@@ -313,7 +328,6 @@
             let urlFinal = servidoresLista[index].url;
             let nombreLower = servidoresLista[index].nombre.toLowerCase();
 
-            // Formateadores automáticos de rutas embed para evitar errores de carga
             if ((nombreLower.includes('voe') || urlFinal.includes('voe.sx')) && !urlFinal.includes('/embed/')) {
                 urlFinal = urlFinal.replace('/e/', '/embed/');
             }
