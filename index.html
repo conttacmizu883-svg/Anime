@@ -101,6 +101,11 @@
         /* Tiempo Restante Centrado */
         .mp4-time-display { font-family: monospace; font-size: 15px; font-weight: bold; color: #fff; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
 
+        /* BARRA COMPLEMENTARIA WEBVIEW ORIGINAL PARA MODO IFRAME (VIMEOS) */
+        .iframe-controls-overlay { position: absolute; bottom: 20px; right: 20px; z-index: 10; display: flex; gap: 10px; }
+        .btn-original-global { background: #141519; color: #fff; border: 1px solid var(--orange-crunchy); font-size: 12px; font-weight: bold; padding: 8px 14px; border-radius: 4px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.2s; text-transform: uppercase; }
+        .btn-original-global:hover { background: var(--orange-crunchy); box-shadow: 0 0 10px var(--orange-glow); }
+
         /* Fin de Estilos MP4 Custom */
 
         @keyframes glowPulse {
@@ -154,6 +159,10 @@
         <div id="sidebarList" class="sidebar-list"></div>
     </div>
     
+    <div class="iframe-controls-overlay">
+        <button class="btn-original-global" onclick="visitarPaginaOriginal()">🌐 Original</button>
+    </div>
+
     <div id="videoContainer" class="video-wrapper">
         <iframe id="protectedPlayer" 
                 allowfullscreen 
@@ -173,7 +182,7 @@
 
         <div class="mp4-controls">
             <button class="mp4-ctrl-btn" onclick="togglePlayMP4()">
-                <svg id="mp4PlayIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="mp4PlayIcon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             </button>
             
             <div class="mp4-progress-container" id="mp4ProgressContainer">
@@ -183,6 +192,10 @@
             </div>
 
             <div class="mp4-time-display" id="mp4TimeDisplay">-00:00</div>
+
+            <button class="mp4-ctrl-btn" onclick="visitarPaginaOriginal()" title="Ver página original" style="margin-left: 5px;">
+                <span style="font-size: 11px; font-weight: bold; background: #141519; padding: 5px 9px; border-radius: 4px; border: 1px solid var(--orange-crunchy); color:#fff; white-space:nowrap;">🌐 ORIGINAL</span>
+            </button>
 
             <button class="mp4-ctrl-btn" onclick="toggleMuteMP4()">
                 <svg id="mp4VolumeIcon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
@@ -205,6 +218,7 @@
 
 <script>
     let textoResultadoGlobal = "";
+    let urlPaginaOriginalDetectada = ""; 
 
     function chibimarisAviso(mensaje) {
         document.getElementById('alertMessage').innerText = mensaje;
@@ -254,6 +268,10 @@
         let resultadosHTML = [];
         let urlBase = window.location.href.split('?')[0];
 
+        // Detección automática de enlaces de páginas de series (como peliculaplay o 123flmsfree)
+        let linkOriginalEncontrado = textoCompleto.match(/https?:\/\/[^\s"'\]]+/i);
+        let trackerOriginal = linkOriginalEncontrado ? linkOriginalEncontrado[0] : "";
+
         // Verificar si la entrada contiene un formato de enlaces directos MP4 continuos
         if(/\.mp4/i.test(textoCompleto) && /(Capítulo|Capitulo|Episodio|Cap)\s*\d+/i.test(textoCompleto)) {
             const lineas = textoCompleto.split('\n');
@@ -267,7 +285,7 @@
                 let matchCap = linea.match(/(?:Capítulo|Capitulo|Episodio|Cap)\s*(\d+)/i);
                 if(matchCap) {
                     if(capituloActual && servidoresEncontrados.length > 0) {
-                        agregarBloqueMP4(capituloActual, servidoresEncontrados, urlBase, resultadosTexto, resultadosHTML);
+                        agregarBloqueMP4(capituloActual, servidoresEncontrados, urlBase, resultadosTexto, resultadosHTML, trackerOriginal);
                     }
                     capituloActual = matchCap[1];
                     servidoresEncontrados = [];
@@ -276,7 +294,7 @@
                 }
             }
             if(capituloActual && servidoresEncontrados.length > 0) {
-                agregarBloqueMP4(capituloActual, servidoresEncontrados, urlBase, resultadosTexto, resultadosHTML);
+                agregarBloqueMP4(capituloActual, servidoresEncontrados, urlBase, resultadosTexto, resultadosHTML, trackerOriginal);
             }
         } else {
             // Formato clásico por bloques (Servidores de siempre u OPCIONES película)
@@ -316,7 +334,8 @@
 
                 if (servidoresEncontrados.length > 0) {
                     let idIdentificador = (tipoContenido === "pelicula") ? "MOVIE" : numeroEp;
-                    let stringData = idIdentificador + "||" + servidoresEncontrados.join(',');
+                    // Almacenamos la URL original al final del bloque protegido usando "REF_SRC"
+                    let stringData = idIdentificador + "||" + servidoresEncontrados.join(',') + (trackerOriginal ? `||REF_SRC|${trackerOriginal}` : '');
                     let dataProtegida = encriptarDatos(stringData);
                     let urlFinal = `${urlBase}?videos=${dataProtegida}`;
 
@@ -333,8 +352,8 @@
         document.getElementById('resultArea').style.display = 'block';
     }
 
-    function agregarBloqueMP4(cap, servidores, urlBase, resTexto, resHTML) {
-        let stringData = cap + "||" + servidores.join(',');
+    function agregarBloqueMP4(cap, servidores, urlBase, resTexto, resHTML, srcRef) {
+        let stringData = cap + "||" + servidores.join(',') + (srcRef ? `||REF_SRC|${srcRef}` : '');
         let dataProtegida = encriptarDatos(stringData);
         let urlFinal = `${urlBase}?videos=${dataProtegida}`;
         resTexto.push(`=== EPISODIO ${cap} ===\n\n🎬 VIDEOS:\n[Chibimaris]\n${urlFinal}`);
@@ -363,8 +382,15 @@
             let identificador = "1";
             let datosServidores = dataDesencriptada;
             
+            // Extraer y procesar URL original de referencia si existe en la cadena desencriptada
+            if(dataDesencriptada.includes("||REF_SRC|")) {
+                let partesRef = dataDesencriptada.split("||REF_SRC|");
+                urlPaginaOriginalDetectada = partesRef[1];
+                dataDesencriptada = partesRef[0];
+            }
+
             if(dataDesencriptada.includes("||")) {
-                let partesData = dataDesescapada = dataDesencriptada.split("||");
+                let partesData = dataDesencriptada.split("||");
                 identificador = partesData[0];
                 datosServidores = partesData[1];
             }
@@ -415,7 +441,6 @@
             const boton = document.createElement('button');
             boton.className = 'server-btn';
             boton.id = `btn-server-${index}`;
-            // Si es opción MP4 genérica le ponemos un bonito tag descriptivo
             boton.innerText = servidor.nombre === "OPCION MP4" ? `REPRODUCCIÓN DIRECTA` : servidor.nombre;
             boton.onclick = () => {
                 cambiarServidor(index);
@@ -449,7 +474,6 @@
                 nativePlayer.src = urlFinal;
                 nativePlayer.load();
                 
-                // Reseteo visual del botón play central estilo captura
                 document.getElementById('mp4CenterIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
                 document.getElementById('mp4PlayIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
             } else {
@@ -469,6 +493,20 @@
                     urlFinal = urlFinal.replace('/v/', '/embed-');
                 }
                 iframe.src = urlFinal;
+            }
+        }
+    }
+
+    // ACCIÓN CLAVE: Redirección transparente a la web original guardada
+    function visitarPaginaOriginal() {
+        if(urlPaginaOriginalDetectada) {
+            window.open(urlPaginaOriginalDetectada, '_blank');
+        } else {
+            // Ruta de escape alternativa en caso de que sea un enlace directo plano
+            if(servidoresLista[indiceActual]) {
+                window.open(servidoresLista[indiceActual].url, '_blank');
+            } else {
+                chibimarisAviso("ℹ️ No hay un enlace fuente original registrado para este video.");
             }
         }
     }
@@ -523,7 +561,6 @@
             let porcentaje = (v.currentTime / v.duration) * 100;
             pBar.style.width = porcentaje + '%';
             
-            // Cálculo exacto del tiempo restante (-MM:SS) como se muestra en la captura original
             let tiempoRestante = v.duration - v.currentTime;
             let mins = Math.floor(tiempoRestante / 60);
             let secs = Math.floor(tiempoRestante % 60);
@@ -531,7 +568,6 @@
         }
     }
 
-    // Navegar haciendo clic en la barra de progreso
     document.getElementById('mp4ProgressContainer').addEventListener('click', function(e) {
         const v = document.getElementById('customNativePlayer');
         const contRect = this.getBoundingClientRect();
